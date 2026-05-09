@@ -1,122 +1,566 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const KasirProApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class KasirProApp extends StatelessWidget {
+  const KasirProApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Kasir Pro',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        primaryColor: const Color(0xFF2E7D32),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF2E7D32),
+          primary: const Color(0xFF2E7D32),
+          secondary: const Color(0xFF1B5E20),
+          surface: Colors.white,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF2E7D32),
+          foregroundColor: Colors.white,
+          centerTitle: false,
+          elevation: 0,
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const SplashScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+// --- MODELS ---
+class Product {
+  final String id, name, category, image;
+  double price;
+  int stock;
+  Product({required this.id, required this.name, required this.category, required this.image, required this.price, required this.stock});
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class Transaction {
+  final String id, method;
+  final double total, tax, totalAfterTax;
+  final DateTime date;
+  final List<Map<String, dynamic>> items;
+  Transaction({required this.id, required this.method, required this.total, required this.tax, required this.totalAfterTax, required this.date, required this.items});
+}
 
-  void _incrementCounter() {
+// --- SPLASH SCREEN ---
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Timer(const Duration(seconds: 2), () { if (mounted) { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainNavigation()));
+  }
+  });
+  }
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:  const Color(0xFF2E7D32),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.point_of_sale_rounded, size: 80, color: Colors.white),
+            const SizedBox(height: 16),
+            const Text("KASIR PRO", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text("Versi 1.1.0", style: TextStyle(color: Colors.white.withOpacity(0.7))),
+          ],
+        )
+      )
+    );
+  }
+}
+
+// --- MAIN NAVIGATION ---
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+  @override 
+  State<MainNavigation> createState() => _MainNavigationState();
+}
+
+class _MainNavigationState extends State<MainNavigation> {
+  int _currentIndex =0;
+  String shopName = "Utusan Store";
+  String shopAddress = "Desa Hariang, kec. sobang, Banten";
+  String shopPhone = "0812-3456-7890";
+
+  double totalRevenue = 0;
+  double totalProfit = 0;
+  List<Transaction> transactions = [];
+
+  List<Product> products = [
+    Product(id: '101', name: 'Lampu LED 15W', price: 25000, stock: 50, category: 'Elektronik', image: 'https://picsum.photos/200?random=1'),
+    Product(id: '102', name: 'Kabel USB C', price: 15000, stock: 30, category: 'Aksesoris', image: 'https://picsum.photos/200?random=2'),
+    Product(id: '103', name: 'Baterai AA 4pcs', price: 12000, stock: 100, category: 'Umum', image: 'https://picsum.photos/200?random=3'),
+    Product(id: '104', name: 'Charger 20W', price: 85000, stock: 20, category: 'Aksesoris', image: 'https://picsum.photos/200?random=4'),
+  ];
+
+  void _onSaleComplete(Transaction trx) {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      transactions.insert(0, trx);
+      totalRevenue += trx.totalAfterTax;
+      totalProfit += (trx.total * 0.15); // Simulated profit
+      for (var item in trx.items) {
+        int idx = products.indexWhere((p) => p.id == item['id']);
+        if (idx != -1) products[idx].stock -= (item['qty'] as int);
+      }
     });
   }
 
-  @override
+  @override 
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final pages = [
+      DashboardPage(
+        revenue: totalRevenue,
+        profit: totalProfit,
+        onNav: (i) => setState(() => _currentIndex = i),
+        shopName: shopName,
+        shopAddress: shopAddress,
+      ),
+      KasirPage(products: products, onComplete: _onSaleComplete, shopInfo: {'name': shopName, 'address': shopAddress, 'phone': shopPhone}),
+      StockPage(products: products),
+      LaporanGridPage(),
+      ProfilePage(name: shopName, address: shopAddress, phone: shopPhone, onSave: (n, a, p) => setState(() { shopName = n; shopAddress = a; shopPhone = p; })),
+    ];
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: pages[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF2E7D32),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart), label: 'Transaksi'),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Stok'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Laporan'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Akun'),
+        ],
       ),
     );
   }
+}
+
+// --- 3. DASHBOARD (Sesuai Foto 2) ---
+class DashboardPage extends StatelessWidget {
+  final double revenue, profit;
+  final String shopName, shopAddress;
+  final Function(int) onNav;
+  const DashboardPage({super.key, required this.revenue, required this.profit, required this.onNav, required this.shopName, required this.shopAddress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("KASIR PRO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        actions: [IconButton(icon: const Icon(Icons.menu), onPressed: () {})],
+      ),
+      body: Column(
+        children: [
+          // Laporan Hari Ini Bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            color: const Color(0xFF388E3C),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: Colors.white, size: 24),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Laporan Hari Ini", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      Row(
+                        children: [
+                          _stat("Total Penjualan", "Rp ${revenue.toStringAsFixed(0)}"),
+                          const SizedBox(width: 20),
+                          _stat("Total Profit", "Rp ${profit.toStringAsFixed(0)}"),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+                const Text("Versi 1.1.0", style: TextStyle(color: Colors.white54, fontSize: 10)),
+              ],
+            ),
+          ),
+          // Store Card
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 60, height: 60,
+                    decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.store, color: Color(0xFF2E7D32), size: 30),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(shopAddress, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.edit, color: Colors.grey, size: 18),
+                ],
+              ),
+            ),
+          ),
+          // Grid Menu
+          Expanded(
+            child: GridView.count(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              crossAxisCount: 3,
+                mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: [
+                _menuItem(Icons.inventory_2, "Produk", Colors.orange, () => onNav(2)),
+                _menuItem(Icons.history, "Riwayat", Colors.blue, () => onNav(3)),
+                _menuItem(Icons.outbound, "Pengeluaran", Colors.red, () {}),
+                _menuItem(Icons.description, "Laporan", Colors.purple, () => onNav(3)),
+                _menuItem(Icons.print, "Cetak Resi", Colors.teal, () {}),
+                _menuItem(Icons.point_of_sale, "Kasir", Colors.green, () => onNav(1)),
+                _menuItem(Icons.settings, "Pengaturan", Colors.amber, () => onNav(4)),
+                _menuItem(Icons.add_box, "Stok Produk", Colors.indigo, () {}),
+              ],
+            ),
+          ),
+          // Big Transaksi Button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton(
+              onPressed: () => onNav(1),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2E7D32),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 55),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("TRANSAKSI", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _stat(String label, String value) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: const TextStyle(color: Colors.white, fontSize: 10)),
+      Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+    ],
+  );
+
+  Widget _menuItem(IconData icon, String label, Color color, VoidCallback onTap) => InkWell(
+    onTap: onTap,
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5)],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    ),
+  );
+}
+
+// --- 4. KASIR & STRUK (Sesuai Foto 1) ---
+class KasirPage extends StatefulWidget {
+  final List<Product> products;
+  final Function (Transaction) onComplete;
+  final Map<String, String> shopInfo;
+  const KasirPage({super.key, required this.products, required this.onComplete, required this.shopInfo});
+  @override 
+  State<KasirPage> createState() => _KasirPageState();
+}
+
+class _KasirPageState extends State<KasirPage> {
+  List<Map<String, dynamic>> cart = [];
+  String query ="";
+
+  void _updateCart(Product p, int delta) {
+    setState(() {
+      int idx = cart.indexWhere((it) => it['id'] == p.id);
+      if (idx != -1) {
+        cart[idx]['qty'] += delta;
+        if (cart[idx]['qty'] <= 0) cart.removeAt(idx);
+      } else if (delta > 0) {
+        cart.add({'id': p.id, 'name': p.name, 'price': p.price, 'qty': 1});
+      }
+    });
+  }
+
+  @override 
+  Widget build(BuildContext context) {
+    final filtered = widget.products.where((p) => p.name.toLowerCase().contains(query.toLowerCase())).toList();
+    double total = cart.fold(0, (sum, it) => sum + (it['price'] * it['qty']));
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Pilih Produk")),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              onChanged: (v) => setState(() => query = v),
+              decoration: InputDecoration(
+                hintText: "Cari Produk / Scan Barcode",
+                prefixIcon: const Icon(Icons.qr_code_scanner),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
+          Expanded(
+            child:  ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (context, i) {
+                final p = filtered[i];
+                int q = cart.firstWhere((it) => it['id'] == p.id, orElse: () => {'qty': 0})['qty'];
+                return ListTile(
+                  leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover)),
+                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("Rp ${p.price.toStringAsFixed(0)} | Stok: ${p.stock}"),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.red),onPressed: () => _updateCart(p, -1)),
+                      Text("$q", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.green), onPressed: () => _updateCart(p, 1)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          if (cart.isNotEmpty) Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Total Bayar", style: TextStyle(color: Colors.grey)), Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)))]),
+                ElevatedButton(
+                  onPressed: () => _showDetailTrx(total),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
+                  child: const Text("CHECKOUT"),
+                )
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showDetailTrx(double total) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.9,
+        decoration: const BoxDecoration(color: Color(0xFFF5F5F5), borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        child: Column(
+          children: [
+            // Header (Dark Green like Foto 1)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(color: Color(0xFF388E3C), borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+              child: Column(
+                children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Detail Transaksi", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white))]),
+                  const SizedBox(height: 20),
+                   Row(
+                    children: [
+                      Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.shopping_basket, color: Colors.white, size: 30)),
+                      const SizedBox(width: 15),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("ID : #7", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          Text("${DateTime.now().toString().substring(0, 16)}", style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                          Text("Jumlah Pesanan : ${cart.length}", style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                        ],
+                      ),
+                      const Spacer(),
+                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text("Total Harga :", style: TextStyle(color: Colors.white70, fontSize: 10)), Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))]),
+                    ],
+                  )
+                ],
+              ),
+            ),
+              // Info Bar
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _info("Kasir", "Owner"),
+                  _info("Metode Bayar", "Cash"),
+                  _info("Bayar", "Rp ${total.toStringAsFixed(0)}"),
+                  _info("Kembalian", "Rp 0"),
+                ],
+              ),
+            ),
+            // Detail Order Title
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Detail Order", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Row(children: [
+                    _smallBtn("Reorder", Colors.orange),
+                    const SizedBox(width: 5),
+                    _smallBtn("Edit Order", Colors.green),
+                  ])
+                ],
+              ),
+            ),
+            // Items List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: cart.length,
+                itemBuilder: (context, i) => Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.lightbulb_outline, color: Colors.grey),
+                      const SizedBox(width: 15),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(cart[i]['name'], style: const TextStyle(fontWeight: FontWeight.bold)), Text("${cart[i]['qty']} X ${cart[i]['price']}", style: const TextStyle(fontSize: 10, color: Colors.grey)), Text("SubTotal Rp ${cart[i]['qty'] * cart[i]['price']}", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))])),
+                      const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Action Buttons
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      _actionBtn(Icons.print, "Cetak", Colors.teal),
+                      const SizedBox(width: 10),
+                      _actionBtn(Icons.list_alt, "Antrian", Colors.grey),
+                      const SizedBox(width: 10),
+                      _actionBtn(Icons.share, "Bagikan", Colors.blueGrey),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.close), label: const Text("Batalkan Pesanan"), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50))),
+                  const SizedBox(height: 10),
+                  TextButton.icon(onPressed: () {
+                    widget.onComplete(Transaction(id: '7', method: 'Cash', total: total, tax: 0, totalAfterTax: total, date: DateTime.now(), items: List.from(cart)));
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                    setState(() => cart = []);
+                  }, icon: const Icon(Icons.delete_forever), label: const Text("Hapus Pesanan"), style: TextButton.styleFrom(foregroundColor: Colors.red)),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _info(String l, String v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey)), Text(v, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))]);
+  Widget _smallBtn(String t, Color c) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(5)), child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 10)));
+  Widget _actionBtn(IconData i, String t, Color c) => Expanded(child: ElevatedButton.icon(onPressed: () {}, icon: Icon(i, size: 16), label: Text(t, style: const TextStyle(fontSize: 11)), style: ElevatedButton.styleFrom(backgroundColor: c, foregroundColor: Colors.white, padding: const EdgeInsets.all(10))));
+}
+
+// --- 5. LAPORAN GRID (Sesuai Foto 3) ---
+class LaporanGridPage extends StatelessWidget {
+  @override 
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Laporan")),
+      body: GridView.count(
+        padding: const EdgeInsets.all(20),
+        crossAxisCount: 3,
+        mainAxisSpacing: 15,
+        crossAxisSpacing: 15,
+        children: [
+          _repItem(Icons.receipt_long, "Laporan Transaksi"),
+          _repItem(Icons.shopping_bag, "Laporan Produk Terjual"),
+          _repItem(Icons.inventory, "Laporan Stok Produk"),
+          _repItem(Icons.category, "Laporan Kategori"),
+          _repItem(Icons.outbound, "Laporan Pengeluaran"),
+          _repItem(Icons.file_download, "Export Ke Excel"),
+          _repItem(Icons.person, "Laporan Kasir"),
+          _repItem(Icons.payments, "Laporan Metode Bayar"),
+        ],
+      ),
+    );
+  }
+  Widget _repItem(IconData i, String t) => Container(
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(i, color: const Color(0xFF2E7D32), size: 30),
+        const SizedBox(height: 8),
+        Text(t, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),   
+      ],
+    ),
+  );
+}
+
+// --- PLACEHOLDERS ---
+class StockPage extends StatelessWidget {
+  final List<Product> products;
+  StockPage({required this.products});
+  @override 
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("Stok")), body: ListView.builder(itemCount: products.length, itemBuilder: (c, i) => ListTile(title: Text(products[i].name), subtitle: Text("Stok: ${products[i].stock}"))));
+}
+
+class ProfilePage extends StatelessWidget {
+  final String name, address, phone;
+  final Function(String, String, String) onSave;
+  ProfilePage({required this.name, required this.address, required this.phone, required this.onSave});
+  @override
+  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("Profil")), body: const Center(child: Text("Halaman Profil")));
 }
