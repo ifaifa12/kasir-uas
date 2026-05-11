@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 void main() {
   runApp(const KasirProApp());
@@ -16,19 +18,27 @@ class KasirProApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
-        primaryColor: const Color(0xFF2E7D32),
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        primaryColor: const Color(0xFF0F172A),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2E7D32),
-          primary: const Color(0xFF2E7D32),
-          secondary: const Color(0xFF1B5E20),
+          seedColor: const Color(0xFF0F172A),
+          brightness: Brightness.light,
+          primary: const Color(0xFF0F172A),
+          secondary: const Color(0xFF334155),
           surface: Colors.white,
         ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF2E7D32),
-          foregroundColor: Colors.white,
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: const Color(0xFF0F172A),
           centerTitle: false,
           elevation: 0,
+          titleTextStyle: GoogleFonts.montserrat(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1,
+            color:const Color(0xFF0F172A),
+          ),
         ),
       ),
       home: const SplashScreen(),
@@ -63,27 +73,56 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), () { if (mounted) { Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainNavigation()));
+    Future.delayed(const Duration(seconds: 3), () =>  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const MainNavigation())));
   }
-  });
-  }
+  
   @override 
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:  const Color(0xFF2E7D32),
-      body: Center(
+      backgroundColor:Color(0xFF0F172A),
+      body: Stack(
+        children: [
+          Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.point_of_sale_rounded, size: 80, color: Colors.white),
-            const SizedBox(height: 16),
-            const Text("KASIR PRO", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text("Versi 1.1.0", style: TextStyle(color: Colors.white.withOpacity(0.7))),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.receipt_long_rounded, size: 80, color: Colors.white),
+            ),
+            const SizedBox(height: 24),
+            Text("KASIR PRO", style:  GoogleFonts.montserrat(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2)),
+            const SizedBox(height: 8),
+            const Text("Solusi Bisnis Modern & Efisien", style: TextStyle(fontSize: 14, color: Colors.white70)),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
           ],
-        )
+        ),
+      ),
+      Positioned(
+        bottom: 40,
+        left: 0,
+        right: 0,
+        child: Column(
+          children: [
+            const Text("Powered by Kasir Pro", style: TextStyle(fontSize: 10, color: Colors.white54)),
+          ],
+        ),
       )
+      ],
+      ),
     );
   }
+
+  Widget _splashMiniIcon(IconData i) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle),
+    child: Icon(i, size: 20, color: Colors.white),
+  );
 }
 
 // --- MAIN NAVIGATION ---
@@ -108,13 +147,32 @@ class _MainNavigationState extends State<MainNavigation> {
     Product(id: '102', name: 'Kabel USB C', price: 15000, stock: 30, category: 'Aksesoris', image: 'https://picsum.photos/200?random=2'),
     Product(id: '103', name: 'Baterai AA 4pcs', price: 12000, stock: 100, category: 'Umum', image: 'https://picsum.photos/200?random=3'),
     Product(id: '104', name: 'Charger 20W', price: 85000, stock: 20, category: 'Aksesoris', image: 'https://picsum.photos/200?random=4'),
+    Product(id: '105', name: 'Mouse Wireless', price: 45000, stock: 15, category: 'Elektronik', image: 'https://picsum.photos/200?random=5'),
+    Product(id: '106', name: 'Keyboard Mechanical', price: 350000, stock: 10, category: 'Elektronik', image: 'https://picsum.photos/200?random=6'),
+    Product(id: '107', name: 'Powerbank 10000mAh', price: 125000, stock: 25, category: 'Aksesoris', image: 'https://picsum.photos/200?random=7'),
+    Product(id: '108', name: 'Headset Gaming', price: 210000, stock: 8, category: 'Elektronik', image: 'https://picsum.photos/200?random=8'),
+    Product(id: '109', name: 'Flashdisk 64GB', price: 65000, stock: 40, category: 'Aksesoris', image: 'https://picsum.photos/200?random=9'),
+    Product(id: '110', name: 'Webcam 1080p', price: 175000, stock: 12, category: 'Elektronik', image: 'https://picsum.photos/200?random=10'),
+    Product(id: '111', name: 'Ring Light 26cm', price: 55000, stock: 18, category: 'Aksesoris', image: 'https://picsum.photos/200?random=11'),
+    Product(id: '112', name: 'Stand Holder HP', price: 15000, stock: 60, category: 'Aksesoris', image: 'https://picsum.photos/200?random=12'),
+    Product(id: '113', name: 'Speaker Bluetooth', price: 120000, stock: 14, category: 'Elektronik', image: 'https://picsum.photos/200?random=13'),
+    Product(id: '114', name: 'Tripod 1.5m', price: 45000, stock: 22, category: 'Aksesoris', image: 'https://picsum.photos/200?random=14'),
+    Product(id: '115', name: 'Microphone Clip-on', price: 25000, stock: 35, category: 'Elektronik', image: 'https://picsum.photos/200?random=15'),
   ];
 
   void _onSaleComplete(Transaction trx) {
     setState(() {
-      transactions.insert(0, trx);
+    final hash = DateTime.now().microsecondsSinceEpoch.toRadixString(16).toUpperCase().substring(5);
+    final newTrx = Transaction(
+      id: hash,
+      method: trx.method, 
+      total: trx.tax,
+      totalAfterTax: trx.totalAfterTax,
+      date: trx.date,
+      items: trx.items,
+    );
       totalRevenue += trx.totalAfterTax;
-      totalProfit += (trx.total * 0.15); // Simulated profit
+      totalProfit += (trx.totalAfterTax * 0.15); // Simulated profit
       for (var item in trx.items) {
         int idx = products.indexWhere((p) => p.id == item['id']);
         if (idx != -1) products[idx].stock -= (item['qty'] as int);
@@ -131,10 +189,12 @@ class _MainNavigationState extends State<MainNavigation> {
         onNav: (i) => setState(() => _currentIndex = i),
         shopName: shopName,
         shopAddress: shopAddress,
+        products: products,
+        transactions: transactions,
+        onShowLaporan: () {},
       ),
       KasirPage(products: products, onComplete: _onSaleComplete, shopInfo: {'name': shopName, 'address': shopAddress, 'phone': shopPhone}),
-      StockPage(products: products),
-      LaporanGridPage(),
+      StockPage(products: products, onAdd: (p) => setState(() => products.add((p)))),
       ProfilePage(name: shopName, address: shopAddress, phone: shopPhone, onSave: (n, a, p) => setState(() { shopName = n; shopAddress = a; shopPhone = p; })),
     ];
 
@@ -144,13 +204,17 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF2E7D32),
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: const Color(0xFF64748B),
+        unselectedItemColor: Colors.grey[500],
+        backgroundColor: Colors.white,
+        elevation: 10,
+        selectedFontSize: 10,
+        unselectedFontSize: 10,
+        iconSize: 22,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart), label: 'Transaksi'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Stok'),
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart_outlined), activeIcon: Icon(Icons.bar_chart), label: 'Laporan'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Akun'),
         ],
       ),
@@ -163,119 +227,120 @@ class DashboardPage extends StatelessWidget {
   final double revenue, profit;
   final String shopName, shopAddress;
   final Function(int) onNav;
-  const DashboardPage({super.key, required this.revenue, required this.profit, required this.onNav, required this.shopName, required this.shopAddress});
+  final List<Product> products;
+  final List<Transaction> transactions;
+  final VoidCallback onShowLaporan;
+  const DashboardPage({super.key, required this.revenue, required this.profit, required this.onNav, required this.shopName, required this.shopAddress, required this.products, required this.transactions, required this.onShowLaporan});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("KASIR PRO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        actions: [IconButton(icon: const Icon(Icons.menu), onPressed: () {})],
+        title: const Text("BERANDA"),
+        actions: [IconButton(icon: const Icon(Icons.notifications_none, size: 20), onPressed: () {})],
       ),
       body: Column(
         children: [
           // Laporan Hari Ini Bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            color: const Color(0xFF388E3C),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF0F1724), Color(0xFF334155)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+               borderRadius: BorderRadius.circular(24),
+                boxShadow: [BoxShadow(color: const Color(0xFF64748B).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+            ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.calendar_today, color: Colors.white, size: 24),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("Laporan Hari Ini", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text("Total Pendapatan", style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                const SizedBox(width: 8),
+                Text("Rp ${revenue.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 24),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _stat("Total Penjualan", "Rp ${revenue.toStringAsFixed(0)}"),
-                          const SizedBox(width: 20),
-                          _stat("Total Profit", "Rp ${profit.toStringAsFixed(0)}"),
+                          _statSmall("Profit", "Rp ${profit.toStringAsFixed(0)}", Colors.greenAccent),
+                          _statSmall("Transaksi", "${transactions.length}", Colors.blueAccent),
+                          _statSmall("Produk", "${products.length}", Colors.orangeAccent),
                         ],
                       )
                     ],
-                  ),
-                ),
-                const Text("Versi 1.1.0", style: TextStyle(color: Colors.white54, fontSize: 10)),
+                 ),
+               ),
+          // Grid Menu
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.5,
+              children: [
+                _menuItem(Icons.bar_chart_rounded, "Laporan", onShowLaporan),
+                _menuItem(Icons.account_balance_wallet_rounded, "Biaya", () => _showExpenseDialog(context)),
+                _menuItem(Icons.history_rounded, "Riwayat", () => onNav(1)), 
+                _menuItem(Icons.receipt_long_rounded, "Cetak Struk", () => _showPrintList(context)),
+                _menuItem(Icons.people_alt_rounded, "Pelanggan", () {}),
               ],
             ),
           ),
-          // Store Card
+
+          //Recent Transaction
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 60, height: 60,
-                    decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.store, color: Color(0xFF2E7D32), size: 30),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(shopName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text(shopAddress, style: TextStyle(color: Colors.grey[600], fontSize: 11)),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.edit, color: Colors.grey, size: 18),
+            padding: const EdgeInsetsGeometry.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                     const Text("Transaksi Terakhir", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+                if (transactions.isEmpty)
+                   Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(40),
+                        child: Column(
+                          children: [
+                            Icon(Icons.receipt_outlined, size: 48, color: Colors.grey[300]),
+                            const SizedBox(height: 12),
+                            const Text("Belum ada transaksi hari ini", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                      )
+                    )
+                  else
+                     ...transactions.take(5).map((t) => _trxTile(t)),
                 ],
               ),
-            ),
-          ),
-          // Grid Menu
-          Expanded(
-            child: GridView.count(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              crossAxisCount: 3,
-                mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              children: [
-                _menuItem(Icons.inventory_2, "Produk", Colors.orange, () => onNav(2)),
-                _menuItem(Icons.history, "Riwayat", Colors.blue, () => onNav(3)),
-                _menuItem(Icons.outbound, "Pengeluaran", Colors.red, () {}),
-                _menuItem(Icons.description, "Laporan", Colors.purple, () => onNav(3)),
-                _menuItem(Icons.print, "Cetak Resi", Colors.teal, () {}),
-                _menuItem(Icons.point_of_sale, "Kasir", Colors.green, () => onNav(1)),
-                _menuItem(Icons.settings, "Pengaturan", Colors.amber, () => onNav(4)),
-                _menuItem(Icons.add_box, "Stok Produk", Colors.indigo, () {}),
-              ],
-            ),
-          ),
-          // Big Transaksi Button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: () => onNav(1),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("TRANSAKSI", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }
 
-  Widget _stat(String label, String value) => Column(
+    void _showExpenseDialog(BuildContext context) {
+    showDialog(context: context, builder: (c) => AlertDialog(
+      title: const Text("Tambah Pengeluaran"),
+      content: const Column(mainAxisSize: MainAxisSize.min, children: [TextField(decoration: InputDecoration(hintText: "Keperluan")), SizedBox(height: 10), TextField(decoration: InputDecoration(hintText: "Jumlah"), keyboardType: TextInputType.number)]),
+      actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text("Batal")), ElevatedButton(onPressed: () => Navigator.pop(c), child: const Text("Simpan"))],
+    ));
+  }
+
+
+  Widget _statSmall(String 1, String v, Color c) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: const TextStyle(color: Colors.white, fontSize: 10)),
-      Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+      Text(1, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+      Text(v, style: TextStyle(color: c, fontWeight: FontWeight.bold, fontSize: 12)),
     ],
   );
 
@@ -290,16 +355,100 @@ class DashboardPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+          Icon(i, color: Colors.white, size: 28),
+          const SizedBox(height: 10),
+          Text(1, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
         ],
       ),
     ),
   );
+
+   Widget _trxTile(Transaction t) => Container(
+    margin: const EdgeInsets.only(bottom: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(10)),
+    child: Row(
+      children: [
+        Icon(Icons.receipt_long_rounded, size: 16, color: Colors.grey[400]),
+        const SizedBox(width: 10),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("INV-${t.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)), Text("${t.items.length} item • ${t.method}", style: const TextStyle(fontSize: 10, color: Colors.grey))])),
+        Text("Rp ${t.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.greenAccent)),
+      ],
+    ),
+  );
+   void _showNotifications(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Pemberitahuan"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _notifItem("Stok Rendah", "Produk 'Headset Gaming' sisa 8 pcs", Colors.orange),
+            _notifItem("Target Penjualan", "Kamu mencapai 80% target hari ini!", Colors.green),
+            _notifItem("Update Sistem", "Kasir Pro v1.2.0 telah tersedia", Colors.blue),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("Tutup"))],
+      ),
+    );
+  }
+
+  Widget _notifItem(String t, String s, Color c) => ListTile(
+    leading: Icon(Icons.circle, size: 10, color: c),
+    title: Text(t, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+    subtitle: Text(s, style: const TextStyle(fontSize: 11)),
+    contentPadding: EdgeInsets.zero,
+  );
+
+  void _showPrintList(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Pilih Struk untuk Dicetak", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: transactions.isEmpty 
+                ? const Center(child: Text("Belum ada transaksi hari ini"))
+                : ListView.builder(
+                    itemCount: transactions.length,
+                     itemBuilder: (context, i) {
+                      final trx = transactions[i];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(color: Colors.grey[50], borderRadius: BorderRadius.circular(12)),
+                        child: ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.print_rounded, size: 18, color: Color(0xFF64748B)),
+                          title: Text("INV-${trx.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          subtitle: Text("Rp ${trx.totalAfterTax.toStringAsFixed(0)} • ${trx.method}", style: const TextStyle(fontSize: 10)),
+                          trailing: ElevatedButton(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Menghubungkan ke Printer...")));
+                            },
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 12), minimumSize: const Size(0, 30)),
+                            child: const Text("Cetak", style: TextStyle(fontSize: 10)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-// --- 4. KASIR & STRUK (Sesuai Foto 1) ---
+
+// --- 4. KASIR PAGE ---
 class KasirPage extends StatefulWidget {
   final List<Product> products;
   final Function (Transaction) onComplete;
@@ -312,6 +461,7 @@ class KasirPage extends StatefulWidget {
 class _KasirPageState extends State<KasirPage> {
   List<Map<String, dynamic>> cart = [];
   String query ="";
+  String selectedMethod = "Tunai";
 
   void _updateCart(Product p, int delta) {
     setState(() {
@@ -324,64 +474,225 @@ class _KasirPageState extends State<KasirPage> {
       }
     });
   }
+  void _showScanner() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: Stack(
+            children: [
+              MobileScanner(
+                onDetect: (capture) {
+                  final List<Barcode> barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    final code = barcode.rawValue;
+                    if (code != null) {
+                      final pIdx = widget.products.indexWhere((p) => p.id == code);
+                      if (pIdx != -1) {
+                        _updateCart(widget.products[pIdx], 1);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Berhasil scan: ${widget.products[pIdx].name}"), duration: const Duration(seconds: 1)));
+                        return;
+                      }
+                    }
+                  }
+                },
+              ),
+              Center(child: Container(width: 200, height: 200, decoration: BoxDecoration(border: Border.all(color: Colors.white54, width: 2), borderRadius: BorderRadius.circular(12)))),
+              Positioned(top: 10, right: 10, child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override 
   Widget build(BuildContext context) {
     final filtered = widget.products.where((p) => p.name.toLowerCase().contains(query.toLowerCase())).toList();
     double total = cart.fold(0, (sum, it) => sum + (it['price'] * it['qty']));
 
-    return Scaffold(
-      appBar: AppBar(title: const Text("Pilih Produk")),
+   return Scaffold(
+      appBar: AppBar(
+        title: const Text("KASIR"), 
+        actions: [if(cart.isNotEmpty) IconButton(icon: const Icon(Icons.delete_sweep_rounded, color: Colors.redAccent), onPressed: () => setState(() => cart = []))]
+      ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              onChanged: (v) => setState(() => query = v),
-              decoration: InputDecoration(
-                hintText: "Cari Produk / Scan Barcode",
-                prefixIcon: const Icon(Icons.qr_code_scanner),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (v) => setState(() => query = v),
+                    decoration: InputDecoration(
+                      hintText: "Cari Produk",
+                      prefixIcon: const Icon(Icons.search_rounded, size: 22, color: Color(0xFF64748B)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.grey[200]!)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF0F172A))),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _showScanner,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(16)),
+                    child: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white, size: 24),
+                  ),
+                )
+              ],
             ),
           ),
           Expanded(
-            child:  ListView.builder(
-              itemCount: filtered.length,
-              itemBuilder: (context, i) {
-                final p = filtered[i];
-                int q = cart.firstWhere((it) => it['id'] == p.id, orElse: () => {'qty': 0})['qty'];
-                return ListTile(
-                  leading: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(p.image, width: 50, height: 50, fit: BoxFit.cover)),
-                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text("Rp ${p.price.toStringAsFixed(0)} | Stok: ${p.stock}"),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(icon: const Icon(Icons.remove_circle_outline, color: Colors.red),onPressed: () => _updateCart(p, -1)),
-                      Text("$q", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.green), onPressed: () => _updateCart(p, 1)),
-                    ],
+            child: Row(
+              children: [
+                // Product List
+                Expanded(
+                  flex: 3,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final p = filtered[i];
+                      int q = cart.firstWhere((it) => it['id'] == p.id, orElse: () => {'qty': 0})['qty'];
+                      return Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey[100]!)),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          leading: Container(
+                            width: 55, height: 55,
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.grey[100]),
+                            child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(p.image, fit: BoxFit.cover)),
+                          ),
+                          title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text("Rp ${p.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                              Text("Stok: ${p.stock}", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                            ],
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (q > 0) ...[
+                                _qtyBtn(Icons.remove_rounded, () => _updateCart(p, -1)),
+                                Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("$q", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                              ],
+                              _qtyBtn(Icons.add_rounded, () => _updateCart(p, 1), isAdd: true),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                // Rincian Belanja Sidebar (Desktop-like) or just a small section
+                if (cart.isNotEmpty && MediaQuery.of(context).size.width > 600) ...[
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(padding: EdgeInsets.all(16), child: Text("Rincian Belanja", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16))),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: cart.length,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemBuilder: (c, i) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(child: Text("${cart[i]['qty']}x ${cart[i]['name']}", style: const TextStyle(fontSize: 12))),
+                                  Text("Rp ${cart[i]['qty'] * cart[i]['price']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ]
+              ],
             ),
           ),
           if (cart.isNotEmpty) Container(
             padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text("Total Bayar", style: TextStyle(color: Colors.grey)), Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)))]),
-                ElevatedButton(
-                  onPressed: () => _showDetailTrx(total),
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E7D32), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15)),
-                  child: const Text("CHECKOUT"),
-                )
-              ],
+            decoration: BoxDecoration(
+              color: Colors.white, 
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -5))],
+            ),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Rincian for mobile (inside the bottom panel)
+                  if (MediaQuery.of(context).size.width <= 600) ...[
+                    const Text("Rincian Belanja", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 100),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: cart.length > 3 ? 3 : cart.length,
+                        itemBuilder: (c, i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("${cart[i]['qty']}x ${cart[i]['name']}", style: const TextStyle(fontSize: 11)),
+                              Text("Rp ${cart[i]['qty'] * cart[i]['price']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (cart.length > 3) const Text("...", style: TextStyle(color: Colors.grey)),
+                    const Divider(),
+                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text("Total Bayar", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                        ],
+                      ),
+                      ElevatedButton(
+                        onPressed: () => _showCheckout(total),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F172A), 
+                          foregroundColor: Colors.white, 
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16), 
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          elevation: 0,
+                        ),
+                        child: const Text("PROSES BAYAR", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             ),
           )
         ],
@@ -389,178 +700,418 @@ class _KasirPageState extends State<KasirPage> {
     );
   }
 
-  void _showDetailTrx(double total) {
+  void _showCheckout(double total) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: const BoxDecoration(color: Color(0xFFF5F5F5), borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-        child: Column(
-          children: [
-            // Header (Dark Green like Foto 1)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(color: Color(0xFF388E3C), borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-              child: Column(
-                children: [
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Detail Transaksi", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white))]),
-                  const SizedBox(height: 20),
-                   Row(
-                    children: [
-                      Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.shopping_basket, color: Colors.white, size: 30)),
-                      const SizedBox(width: 15),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => StatefulBuilder(
+         builder: (context, setModalState) => Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          decoration: const BoxDecoration(color: Color(0xFFF8FAFC), borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+          child: Column(
+           children: [
+              Container(height: 4, width: 40, margin: const EdgeInsets.symmetric(vertical: 16), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("Pilih Metode Pembayaran", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)), IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded))]),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  children: [
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF334155)]),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
                         children: [
-                          const Text("ID : #7", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          Text("${DateTime.now().toString().substring(0, 16)}", style: const TextStyle(color: Colors.white70, fontSize: 10)),
-                          Text("Jumlah Pesanan : ${cart.length}", style: const TextStyle(color: Colors.white70, fontSize: 10)),
+                          const Text("Total Bayar", style: TextStyle(color: Colors.white70, fontSize: 13)),
+                          const SizedBox(height: 8),
+                          Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
                         ],
                       ),
-                      const Spacer(),
-                      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [const Text("Total Harga :", style: TextStyle(color: Colors.white70, fontSize: 10)), Text("Rp ${total.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold))]),
-                    ],
-                  )
-                ],
-              ),
-            ),
-              // Info Bar
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _info("Kasir", "Owner"),
-                  _info("Metode Bayar", "Cash"),
-                  _info("Bayar", "Rp ${total.toStringAsFixed(0)}"),
-                  _info("Kembalian", "Rp 0"),
-                ],
-              ),
-            ),
-            // Detail Order Title
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Detail Order", style: TextStyle(fontWeight: FontWeight.bold)),
-                  Row(children: [
-                    _smallBtn("Reorder", Colors.orange),
-                    const SizedBox(width: 5),
-                    _smallBtn("Edit Order", Colors.green),
-                  ])
-                ],
-              ),
-            ),
-            // Items List
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: cart.length,
-                itemBuilder: (context, i) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.lightbulb_outline, color: Colors.grey),
-                      const SizedBox(width: 15),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(cart[i]['name'], style: const TextStyle(fontWeight: FontWeight.bold)), Text("${cart[i]['qty']} X ${cart[i]['price']}", style: const TextStyle(fontSize: 10, color: Colors.grey)), Text("SubTotal Rp ${cart[i]['qty'] * cart[i]['price']}", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))])),
-                      const Icon(Icons.keyboard_arrow_right, color: Colors.grey),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 32),
+                    const Text("Metode Pembayaran", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _payMethodItem("Tunai", Icons.payments_rounded, selectedMethod == "Tunai", () => setModalState(() => selectedMethod = "Tunai")),
+                        _payMethodItem("ShopeePay", Icons.account_balance_wallet_rounded, selectedMethod == "ShopeePay", () => setModalState(() => selectedMethod = "ShopeePay")),
+                        _payMethodItem("Dana", Icons.wallet_rounded, selectedMethod == "Dana", () => setModalState(() => selectedMethod = "Dana")),
+                        _payMethodItem("QRIS", Icons.qr_code_2_rounded, selectedMethod == "QRIS", () => setModalState(() => selectedMethod = "QRIS")),
+                        _payMethodItem("Transfer", Icons.account_balance_rounded, selectedMethod == "Transfer", () => setModalState(() => selectedMethod = "Transfer")),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ),
-            // Action Buttons
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      _actionBtn(Icons.print, "Cetak", Colors.teal),
-                      const SizedBox(width: 10),
-                      _actionBtn(Icons.list_alt, "Antrian", Colors.grey),
-                      const SizedBox(width: 10),
-                      _actionBtn(Icons.share, "Bagikan", Colors.blueGrey),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(onPressed: () {}, icon: const Icon(Icons.close), label: const Text("Batalkan Pesanan"), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50))),
-                  const SizedBox(height: 10),
-                  TextButton.icon(onPressed: () {
-                    widget.onComplete(Transaction(id: '7', method: 'Cash', total: total, tax: 0, totalAfterTax: total, date: DateTime.now(), items: List.from(cart)));
+             Padding(
+                padding: const EdgeInsets.all(24),
+                child: ElevatedButton(
+                  onPressed: () {
+                    final trx = Transaction(id: '${DateTime.now().millisecondsSinceEpoch}', method: selectedMethod, total: total, tax: 0, totalAfterTax: total, date: DateTime.now(), items: List.from(cart));
+                    widget.onComplete(trx);
                     Navigator.pop(context);
-                    Navigator.pop(context);
+                    _showReceipt(trx);
                     setState(() => cart = []);
-                  }, icon: const Icon(Icons.delete_forever), label: const Text("Hapus Pesanan"), style: TextButton.styleFrom(foregroundColor: Colors.red)),
-                ],
-              ),
-            )
-          ],
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F172A), 
+                    foregroundColor: Colors.white, 
+                    minimumSize: const Size(double.infinity, 60), 
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 4,
+                  ),
+                  child: const Text("SELESAIKAN TRANSAKSI", style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _info(String l, String v) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(l, style: const TextStyle(fontSize: 10, color: Colors.grey)), Text(v, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))]);
-  Widget _smallBtn(String t, Color c) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(5)), child: Text(t, style: const TextStyle(color: Colors.white, fontSize: 10)));
-  Widget _actionBtn(IconData i, String t, Color c) => Expanded(child: ElevatedButton.icon(onPressed: () {}, icon: Icon(i, size: 16), label: Text(t, style: const TextStyle(fontSize: 11)), style: ElevatedButton.styleFrom(backgroundColor: c, foregroundColor: Colors.white, padding: const EdgeInsets.all(10))));
+
+  Widget _payMethodItem(String l, IconData i, bool sel, VoidCallback onTap) => InkWell(
+    onTap: onTap,
+    child: Container(
+      width: (MediaQuery.of(context).size.width - 72) / 3,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: sel ? const Color(0xFF0F172A) : Colors.white, 
+        borderRadius: BorderRadius.circular(12), 
+        border: Border.all(color: sel ? const Color(0xFF0F172A) : Colors.grey[200]!),
+        boxShadow: sel ? [BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))] : [],
+      ),
+      child: Column(
+        children: [
+          Icon(i, color: sel ? Colors.white : const Color(0xFF64748B), size: 20),
+          const SizedBox(height: 6),
+          Text(l, style: TextStyle(color: sel ? Colors.white : const Color(0xFF64748B), fontSize: 9, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    ),
+  );
+
+
+  void _showReceipt(Transaction trx) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: EdgeInsets.zero,
+        content: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: const BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                  child: const Column(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 48),
+                      SizedBox(height: 12),
+                      Text("Transaksi Berhasil", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Text(widget.shopInfo['name']!, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                      Text(widget.shopInfo['address']!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                      const Divider(height: 32),
+                      ...trx.items.map((it) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("${it['qty']}x ${it['name']}", style: const TextStyle(fontSize: 12)),
+                            Text("Rp ${it['qty'] * it['price']}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      )),
+                      const Divider(height: 32),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("TOTAL", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                          Text("Rp ${trx.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: Color(0xFF0F172A))),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Metode Pembayaran", style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          Text(trx.method, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0F172A), foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 50), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                    child: const Text("TUTUP", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// --- 5. LAPORAN GRID (Sesuai Foto 3) ---
-class LaporanGridPage extends StatelessWidget {
-  @override 
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Laporan")),
-      body: GridView.count(
-        padding: const EdgeInsets.all(20),
-        crossAxisCount: 3,
-        mainAxisSpacing: 15,
-        crossAxisSpacing: 15,
-        children: [
-          _repItem(Icons.receipt_long, "Laporan Transaksi"),
-          _repItem(Icons.shopping_bag, "Laporan Produk Terjual"),
-          _repItem(Icons.inventory, "Laporan Stok Produk"),
-          _repItem(Icons.category, "Laporan Kategori"),
-          _repItem(Icons.outbound, "Laporan Pengeluaran"),
-          _repItem(Icons.file_download, "Export Ke Excel"),
-          _repItem(Icons.person, "Laporan Kasir"),
-          _repItem(Icons.payments, "Laporan Metode Bayar"),
+// --- STOCK PAGE ---
+class StockPage extends StatefulWidget {
+  final List<Product> products;
+  final Function(Product) onAdd;
+  const StockPage({super.key, required this.products, required this.onAdd});
+  @override
+  State<StockPage> createState() => _StockPageState();
+}
+
+class _StockPageState extends State<StockPage> {
+  void _showAddProduct() {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final stockCtrl = TextEditingController();
+    final catCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Tambah Produk Baru"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: "Nama Produk")),
+              TextField(controller: catCtrl, decoration: const InputDecoration(labelText: "Kategori")),
+              TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: "Harga"), keyboardType: TextInputType.number),
+              TextField(controller: stockCtrl, decoration: const InputDecoration(labelText: "Stok"), keyboardType: TextInputType.number),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
+          ElevatedButton(onPressed: () {
+            final p = Product(
+              id: '${DateTime.now().millisecondsSinceEpoch}',
+              name: nameCtrl.text,
+              category: catCtrl.text,
+              price: double.tryParse(priceCtrl.text) ?? 0,
+              stock: int.tryParse(stockCtrl.text) ?? 0,
+              image: 'https://picsum.photos/200?random=${DateTime.now().second}',
+            );
+            widget.onAdd(p);
+            Navigator.pop(context);
+          }, child: const Text("Tambah")),
         ],
       ),
     );
   }
-  Widget _repItem(IconData i, String t) => Container(
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("STOK PRODUK"), actions: [IconButton(icon: const Icon(Icons.add_rounded), onPressed: _showAddProduct)]),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: widget.products.length,
+        itemBuilder: (context, i) {
+          final p = widget.products[i];
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[100]!)),
+            child: Row(
+              children: [
+                ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(p.image, width: 45, height: 45, fit: BoxFit.cover)),
+                const SizedBox(width: 16),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)), Text(p.category, style: const TextStyle(fontSize: 11, color: Colors.grey))])),
+                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text("${p.stock}", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: p.stock < 10 ? Colors.redAccent : const Color(0xFF0F172A))), const Text("Stok", style: TextStyle(fontSize: 10, color: Colors.grey))]),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  } 
+}
+
+// --- PROFILE / SETTINGS PAGE ---
+class ProfilePage extends StatelessWidget {
+  final String name, address, phone;
+  final Function(String, String, String) onSave;
+  const ProfilePage({super.key, required this.name, required this.address, required this.phone, required this.onSave});
+
+  void _editInfo(BuildContext context, String title, String current, Function(String) onUpdate) {
+    final controller = TextEditingController(text: current);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Ubah $title"),
+        content: TextField(controller: controller, decoration: InputDecoration(hintText: "Masukkan $title baru")),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Batal")),
+          ElevatedButton(onPressed: () { onUpdate(controller.text); Navigator.pop(context); }, child: const Text("Simpan")),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("PENGATURAN")),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          // Profile Header
+          Center(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: Colors.grey[200]!)),
+                  child: const Icon(Icons.storefront_rounded, size: 40, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 16),
+                Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+                Text(phone, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+          const Text("Informasi Toko", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF64748B))),
+          const SizedBox(height: 16),
+          _settingTile(context, Icons.store_rounded, "Nama Toko", name, (v) => onSave(v, address, phone)),
+          _settingTile(context, Icons.location_on_rounded, "Alamat", address, (v) => onSave(name, v, phone)),
+          _settingTile(context, Icons.phone_rounded, "Nomor Telepon", phone, (v) => onSave(name, address, v)),
+          const SizedBox(height: 32),
+          const Text("Aplikasi", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF64748B))),
+          const SizedBox(height: 16),
+          _settingTile(context, Icons.print_rounded, "Printer & Struk", "Belum terhubung", (_) {}),
+          _settingTile(context, Icons.cloud_done_rounded, "Cadangkan Data", "Cloud Sync Aktif", (_) {}),
+          const SizedBox(height: 48),
+          const Center(child: Text("Kasir Pro v1.2.0 • Build Local", style: TextStyle(color: Colors.grey, fontSize: 10))),
+        ],
+      ),
+    );
+  }
+
+  Widget _settingTile(BuildContext context, IconData i, String t, String v, Function(String) onEdit) => Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[100]!)),
+    child: Row(
       children: [
-        Icon(i, color: const Color(0xFF2E7D32), size: 30),
-        const SizedBox(height: 8),
-        Text(t, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),   
+        Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12)), child: Icon(i, size: 20, color: const Color(0xFF64748B))),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey)), Text(v, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold))])),
+        IconButton(icon: const Icon(Icons.edit_rounded, size: 18, color: Colors.grey), onPressed: () => _editInfo(context, t, v, onEdit)),
       ],
     ),
   );
 }
 
-// --- PLACEHOLDERS ---
-class StockPage extends StatelessWidget {
-  final List<Product> products;
-  StockPage({required this.products});
-  @override 
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("Stok")), body: ListView.builder(itemCount: products.length, itemBuilder: (c, i) => ListTile(title: Text(products[i].name), subtitle: Text("Stok: ${products[i].stock}"))));
+class SalesSummaryPage extends StatelessWidget {
+  final List<Transaction> transactions;
+  const SalesSummaryPage({super.key, required this.transactions});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("RINGKASAN PENJUALAN")),
+      body: transactions.isEmpty 
+        ? const Center(child: Text("Belum ada transaksi"))
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: transactions.length,
+            itemBuilder: (context, i) {
+              final t = transactions[i];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  title: Text("Transaksi #${t.id.substring(t.id.length-5)}", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("${t.items.length} Item • ${t.method}"),
+                  trailing: Text("Rp ${t.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.green)),
+                ),
+              );
+            },
+          ),
+    );
+  }
 }
 
-class ProfilePage extends StatelessWidget {
-  final String name, address, phone;
-  final Function(String, String, String) onSave;
-  ProfilePage({required this.name, required this.address, required this.phone, required this.onSave});
+class StockReportView extends StatelessWidget {
+  final List<Product> products;
+  const StockReportView({super.key, required this.products});
   @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text("Profil")), body: const Center(child: Text("Halaman Profil")));
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("LAPORAN STOK")),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: products.length,
+        itemBuilder: (context, i) {
+          final p = products[i];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(p.category),
+              trailing: Text("${p.stock}", style: TextStyle(fontWeight: FontWeight.w900, color: p.stock < 10 ? Colors.red : Colors.black)),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ExpenseReportPage extends StatelessWidget {
+  final List<Expense> expenses;
+  const ExpenseReportPage({super.key, required this.expenses});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("LAPORAN PENGELUARAN")),
+      body: expenses.isEmpty 
+        ? const Center(child: Text("Belum ada pengeluaran"))
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: expenses.length,
+            itemBuilder: (context, i) {
+              final e = expenses[i];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  title: Text(e.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("${e.date.day}/${e.date.month}/${e.date.year}"),
+                  trailing: Text("Rp ${e.amount.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.red)),
+                ),
+              );
+            },
+          ),
+    );
+  }
 }
