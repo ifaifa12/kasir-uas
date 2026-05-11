@@ -1,16 +1,32 @@
-# uas_kasir
+BLUEPRINT PENGEMBANGAN APLIKASI PRO
+1. Profil Proyek: Aplikasi Kasir Pro merupakan aplikasi (Point of Sale/POS) berbasis mobile yang dirancang untuk membantu pemilik usaha kecil seperti toko kelontong dalam mengelola transaksi penjualan dan stok barang secara cepat, rapi, dan efisien.
 
-A new Flutter project.
+Aplikasi ini dibuat untuk menggantikan sistem pencatat manual yang masih sering digunaka, sehingga dapat menminimalkan kesalahan serta meningkatkan kecepatan dalam proses transaksi.
 
-## Getting Started
+.visi: menjadi aplikasi kasir yang sederhana, praktis, dan mudah digunakan oleh pelaku UMKM.
+.prinsip desain: Tampilan sederhana, responsif, dan user-frendly.
 
-This project is a starting point for a Flutter application.
+2. Fitu Utama
+.kasir pintar: menambah produk kekeranjang dan menghitung total belanja secara otomatis.
+.Barcode Scanner: mempermudah input produk melalui proses scan barcode.
+.Dashboard: menampilkan informasi omzet dan jumlah transaksi secara real-time.
+.Manajemen produk: menyediakan data produk seperti harga, kategori, dan stok barang.
+.Riwayat transaksi: menyimpan data transaksi yang telah dilakukan.
+.Struk digital: menampilkan bukti pembayaran  secara otomatis setelah transaksi selesai.
 
-A few resources to get you started if this is your first Flutter project:
+3. Rencana kerja (Roadmap)
+| Tahap | Kegiatan | Status |
+| :--- | :--- | :--- |
+| Perencanaan | Penyusunan konsep dan desain aplikasi | ✅ Selesai |
+| UI Development | Pembuatan tampilan aplikasi | ✅ Selesai |
+| Logic Implementation | Pengembangan sistem kasir | ✅ Selesai |
+| Testing | Pengujian aplikasi | ✅ Selesai |
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+4. Manfaat Aplikasi
+. mempercepat proses transaksi jualan
+. mengurangi kesalahan hitung
+. memudahkan pencatat data transaksi
+. membantu pemantauan stok barang
+. memberikan tampilan kasir yang lebih modern
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Kesimpulan: Kasir Pro merupakan solusi aplikasi berbasis mobile yang dapat membantu pelaku usaha dalam mengelola transaksi secara lebih cepat, akurat, dan efisien. Dengan fitur yang sederhana namun lengkap, aplikasi ini mendukung operasional usaha kecil.
