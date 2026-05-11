@@ -62,6 +62,13 @@ class Transaction {
   Transaction({required this.id, required this.method, required this.total, required this.tax, required this.totalAfterTax, required this.date, required this.items});
 }
 
+class Expense {
+  final String title;
+  final double amount;
+  final DateTime date;
+  Expense({required this.title, required this.amount, required this.date});
+}
+
 // --- SPLASH SCREEN ---
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -162,15 +169,19 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _onSaleComplete(Transaction trx) {
     setState(() {
-    final hash = DateTime.now().microsecondsSinceEpoch.toRadixString(16).toUpperCase().substring(5);
+    final hash = DateTime.now()
+    .microsecondsSinceEpoch
+    .toRadixString(16).toUpperCase().substring(5);
     final newTrx = Transaction(
       id: hash,
       method: trx.method, 
-      total: trx.tax,
+      total: trx.total,
+      tax: trx.tax,
       totalAfterTax: trx.totalAfterTax,
       date: trx.date,
       items: trx.items,
     );
+      transactions.add(newTrx);
       totalRevenue += trx.totalAfterTax;
       totalProfit += (trx.totalAfterTax * 0.15); // Simulated profit
       for (var item in trx.items) {
@@ -191,8 +202,9 @@ class _MainNavigationState extends State<MainNavigation> {
         shopAddress: shopAddress,
         products: products,
         transactions: transactions,
-        onShowLaporan: () {},
+        onShowLaporan: () => _showLaporanMenu(context),
       ),
+      TransactionsHistoryPage(transactions: transactions),
       KasirPage(products: products, onComplete: _onSaleComplete, shopInfo: {'name': shopName, 'address': shopAddress, 'phone': shopPhone}),
       StockPage(products: products, onAdd: (p) => setState(() => products.add((p)))),
       ProfilePage(name: shopName, address: shopAddress, phone: shopPhone, onSave: (n, a, p) => setState(() { shopName = n; shopAddress = a; shopPhone = p; })),
@@ -215,9 +227,82 @@ class _MainNavigationState extends State<MainNavigation> {
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
           BottomNavigationBarItem(icon: Icon(Icons.shopping_cart_outlined), activeIcon: Icon(Icons.shopping_cart), label: 'Transaksi'),
           BottomNavigationBarItem(icon: Icon(Icons.inventory_2_outlined), activeIcon: Icon(Icons.inventory_2), label: 'Stok'),
+        BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Riwayat'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outlined), activeIcon: Icon(Icons.person), label: 'Akun'),
         ],
       ),
+    );
+  }
+
+  void _showLaporanMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Pilih Laporan", style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18)),
+            const SizedBox(height: 24),
+            _laporanItem(context, Icons.insights_rounded, "Laporan Penjualan", Colors.green, () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (c) => SalesSummaryPage(transactions: transactions)));
+            }),
+            _laporanItem(context, Icons.inventory_2_rounded, "Laporan Stok", Colors.orange, () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (c) => StockReportView(products: products)));
+            }),
+            _laporanItem(context, Icons.account_balance_wallet_rounded, "Laporan Pengeluaran", Colors.red, () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (c) => ExpenseReportPage(expenses: []))); // Pass actual expenses if tracked
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _laporanItem(BuildContext context, IconData icon, String title, Color color, VoidCallback onTap) => ListTile(
+    leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)), child: Icon(icon, color: color)),
+    title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+    trailing: const Icon(Icons.chevron_right_rounded),
+    onTap: onTap,
+  );
+}
+
+// --- NEW TRANSACTIONS HISTORY PAGE ---
+class TransactionsHistoryPage extends StatelessWidget {
+  final List<Transaction> transactions;
+  const TransactionsHistoryPage({super.key, required this.transactions});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("RIWAYAT TRANSAKSI")),
+      body: transactions.isEmpty 
+        ? Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history_rounded, size: 64, color: Colors.grey[300]), const SizedBox(height: 16), const Text("Belum ada riwayat", style: TextStyle(color: Colors.grey))]))
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: transactions.length,
+            itemBuilder: (context, i) {
+              final t = transactions[transactions.length - 1 - i]; // Show newest first
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey[100]!)),
+                child: Row(
+                  children: [
+                    Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF64748B))),
+                    const SizedBox(width: 16),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("INV-${t.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), Text("${t.method} • ${t.items.length} item", style: const TextStyle(fontSize: 11, color: Colors.grey))])),
+                    Text("Rp ${t.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A))),
+                  ],
+                ),
+              );
+            },
+          ),
     );
   }
 }
@@ -237,7 +322,7 @@ class DashboardPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text("BERANDA"),
-        actions: [IconButton(icon: const Icon(Icons.notifications_none, size: 20), onPressed: () {})],
+        actions: [IconButton(icon: const Icon(Icons.notifications_none, size: 20), onPressed: () => _showNotifications(context))],
       ),
       body: Column(
         children: [
@@ -247,27 +332,27 @@ class DashboardPage extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [Color(0xFF0F1724), Color(0xFF334155)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-               borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: const Color(0xFF64748B).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [BoxShadow(color: const Color(0xFF64748B).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text("Total Pendapatan", style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
-                const SizedBox(width: 8),
+                const SizedBox(height: 8),
                 Text("Rp ${revenue.toStringAsFixed(0)}", style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _statSmall("Profit", "Rp ${profit.toStringAsFixed(0)}", Colors.greenAccent),
-                          _statSmall("Transaksi", "${transactions.length}", Colors.blueAccent),
-                          _statSmall("Produk", "${products.length}", Colors.orangeAccent),
-                        ],
-                      )
-                    ],
-                 ),
-               ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _statSmall("Profit", "Rp ${profit.toStringAsFixed(0)}", Colors.greenAccent),
+                    _statSmall("Transaksi", "${transactions.length}", Colors.blueAccent),
+                    _statSmall("Produk", "${products.length}", Colors.orangeAccent),
+                  ],
+                )
+              ],
+            ),
+          ),
           // Grid Menu
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -279,11 +364,11 @@ class DashboardPage extends StatelessWidget {
               crossAxisSpacing: 16,
               childAspectRatio: 1.5,
               children: [
-                _menuItem(Icons.bar_chart_rounded, "Laporan", onShowLaporan),
-                _menuItem(Icons.account_balance_wallet_rounded, "Biaya", () => _showExpenseDialog(context)),
-                _menuItem(Icons.history_rounded, "Riwayat", () => onNav(1)), 
-                _menuItem(Icons.receipt_long_rounded, "Cetak Struk", () => _showPrintList(context)),
-                _menuItem(Icons.people_alt_rounded, "Pelanggan", () {}),
+                _menuItem(Icons.bar_chart_rounded, "Laporan", const Color(0xFF0F172A), onShowLaporan),
+                _menuItem(Icons.account_balance_wallet_rounded, "Biaya", Colors.redAccent, () => _showExpenseDialog(context)),
+                _menuItem(Icons.history_rounded, "Riwayat", Colors.blueAccent, () => onNav(3)), 
+                _menuItem(Icons.receipt_long_rounded, "Cetak Struk", Colors.purpleAccent, () => _showPrintList(context)),
+                _menuItem(Icons.people_alt_rounded, "Pelanggan", Colors.orangeAccent, () {}),
               ],
             ),
           ),
@@ -291,38 +376,36 @@ class DashboardPage extends StatelessWidget {
           //Recent Transaction
           Padding(
             padding: const EdgeInsets.all(16),
-            padding: const EdgeInsetsGeometry.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                     const Text("Transaksi Terakhir", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    const Text("Transaksi Terakhir", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                   ],
                 ),
 
                 const SizedBox(height: 8),
                 if (transactions.isEmpty)
-                   Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(40),
-                        child: Column(
-                          children: [
-                            Icon(Icons.receipt_outlined, size: 48, color: Colors.grey[300]),
-                            const SizedBox(height: 12),
-                            const Text("Belum ada transaksi hari ini", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          ],
-                        ),
-                      )
-                    )
-                  else
-                     ...transactions.take(5).map((t) => _trxTile(t)),
-                ],
-              ),
-            )
-          ],
-        ),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        children: [
+                          Icon(Icons.receipt_outlined, size: 48, color: Colors.grey[300]),
+                          const SizedBox(height: 12),
+                          const Text("Belum ada transaksi hari ini", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...transactions.take(5).map((t) => _trxTile(t)),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
@@ -336,10 +419,10 @@ class DashboardPage extends StatelessWidget {
   }
 
 
-  Widget _statSmall(String 1, String v, Color c) => Column(
+  Widget _statSmall(String label, String v, Color c) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(1, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+      Text(label, style: const TextStyle(color: Colors.white54, fontSize: 10)),
       Text(v, style: TextStyle(color: c, fontWeight: FontWeight.bold, fontSize: 12)),
     ],
   );
@@ -355,24 +438,40 @@ class DashboardPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(i, color: Colors.white, size: 28),
+          Icon(icon, color: color, size: 28),
           const SizedBox(height: 10),
-          Text(1, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)), textAlign: TextAlign.center),
         ],
       ),
     ),
   );
 
    Widget _trxTile(Transaction t) => Container(
-    margin: const EdgeInsets.only(bottom: 6),
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(10)),
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.white, 
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+    ),
     child: Row(
       children: [
-        Icon(Icons.receipt_long_rounded, size: 16, color: Colors.grey[400]),
-        const SizedBox(width: 10),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("INV-${t.id}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)), Text("${t.items.length} item • ${t.method}", style: const TextStyle(fontSize: 10, color: Colors.grey))])),
-        Text("Rp ${t.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12, color: Colors.greenAccent)),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.receipt_rounded, size: 20, color: Color(0xFF0F172A)),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, 
+            children: [
+              Text("INV-${t.id}", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))), 
+              Text("${t.items.length} item • ${t.method}", style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+            ]
+          )
+        ),
+        Text("Rp ${t.totalAfterTax.toStringAsFixed(0)}", style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Colors.green)),
       ],
     ),
   );
@@ -510,6 +609,20 @@ class _KasirPageState extends State<KasirPage> {
     );
   }
 
+  Widget _qtyBtn(IconData icon, VoidCallback onTap, {bool isAdd = false}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: isAdd ? const Color(0xFF0F172A) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: isAdd ? Colors.white : const Color(0xFF0F172A)),
+      ),
+    );
+  }
+
   @override 
   Widget build(BuildContext context) {
     final filtered = widget.products.where((p) => p.name.toLowerCase().contains(query.toLowerCase())).toList();
@@ -576,13 +689,24 @@ class _KasirPageState extends State<KasirPage> {
                             decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.grey[100]),
                             child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(p.image, fit: BoxFit.cover)),
                           ),
-                          title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                          title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: Color(0xFF0F172A))),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
-                              Text("Rp ${p.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
-                              Text("Stok: ${p.stock}", style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(4)),
+                                    child: Text(p.category, style: const TextStyle(fontSize: 9, color: Color(0xFF64748B), fontWeight: FontWeight.bold)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text("Stok: ${p.stock}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text("Rp ${p.price.toStringAsFixed(0)}", style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w900)),
                             ],
                           ),
                           trailing: Row(
@@ -590,7 +714,7 @@ class _KasirPageState extends State<KasirPage> {
                             children: [
                               if (q > 0) ...[
                                 _qtyBtn(Icons.remove_rounded, () => _updateCart(p, -1)),
-                                Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text("$q", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+                                Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text("$q", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900))),
                               ],
                               _qtyBtn(Icons.add_rounded, () => _updateCart(p, 1), isAdd: true),
                             ],
