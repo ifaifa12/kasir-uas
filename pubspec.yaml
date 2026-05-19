@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   google_fonts: ^6.2.1
   mobile_scanner: ^5.1.1
+  blue_thermal_printer: ^1.2.3
 
 dev_dependencies:
   flutter_test:
