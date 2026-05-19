@@ -1,5 +1,5 @@
-name: uas_kasir
-description: "Aplikasi Kasir Pro Tugas UAS"
+name: tabungan_online
+description: "Aplikasi Tabungan Online"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -35,8 +35,12 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   google_fonts: ^6.2.1
-  mobile_scanner: ^5.1.1
-  blue_thermal_printer: ^1.2.3
+  intl: ^0.20.2
+  image_picker: ^1.2.2
+  shared_preferences: ^2.5.5
+  provider: ^6.1.5+1
+  flutter_local_notifications: ^21.0.0
+  timezone: ^0.11.0
 
 dev_dependencies:
   flutter_test:
