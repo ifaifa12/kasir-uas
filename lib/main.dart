@@ -1025,7 +1025,7 @@ class TabunganScreen extends StatelessWidget {
   }
 
   void _showCatatTabunganDialog(BuildContext context, TargetTabungan target) {
-    TextEditingController nominalController = TextEditingController(text: target.nominalPengisian != null ? target.nominalPengisian!.toInt().toString() : '');
+    TextEditingController nominalController = TextEditingController();
     TextEditingController ketController = TextEditingController();
     bool isTambah = true;
     
