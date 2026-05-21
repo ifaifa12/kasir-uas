@@ -5,6 +5,9 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
 
+  String _language = 'id'; // 'id' for Indonesian, 'en' for English
+  String get language => _language;
+
   bool get isDarkMode {
     if (_themeMode == ThemeMode.system) {
       final window = WidgetsBinding.instance.platformDispatcher;
@@ -14,26 +17,34 @@ class ThemeProvider with ChangeNotifier {
   }
 
   ThemeProvider() {
-    _loadTheme();
+    _loadSettings();
   }
 
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
-    _saveTheme();
+    _saveSettings();
     notifyListeners();
   }
 
-  _loadTheme() async {
+  void setLanguage(String lang) {
+    _language = lang;
+    _saveSettings();
+    notifyListeners();
+  }
+
+  _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? modeStr = prefs.getString('themeMode');
     if (modeStr != null) {
       _themeMode = ThemeMode.values.firstWhere((e) => e.toString() == modeStr, orElse: () => ThemeMode.system);
     }
+    _language = prefs.getString('language') ?? 'id';
     notifyListeners();
   }
 
-  _saveTheme() async {
+  _saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('themeMode', _themeMode.toString());
+    prefs.setString('language', _language);
   }
 }

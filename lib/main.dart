@@ -10,6 +10,54 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
 
+String tr(BuildContext context, String key) {
+  final lang = Provider.of<ThemeProvider>(context).language;
+  if (lang == 'id') return key;
+  
+  const translations = {
+    'Beranda': 'Home',
+    'Riwayat': 'History',
+    'Pengaturan': 'Settings',
+    'Tabungan Online': 'Online Savings',
+    'Buat Target': 'New Target',
+    'Simpan': 'Save',
+    'Menabung': 'Save',
+    'Tarik Dana': 'Withdraw',
+    'Terkumpul': 'Collected',
+    'Kekurangan': 'Remaining',
+    'Tanggal Dibuat': 'Created Date',
+    'Estimasi': 'Estimate',
+    'Pilih Tema': 'Select Theme',
+    'Terang': 'Light',
+    'Gelap': 'Dark',
+    'Sistem Default': 'System',
+    'Batal': 'Cancel',
+    'Bahasa': 'Language',
+    'Pilihan Bahasa': 'Language Options',
+    'Tema Aplikasi': 'App Theme',
+    'Notifikasi': 'Notifications',
+    'Pengingat Menabung': 'Savings Reminder',
+    'Waktu Pengingat': 'Reminder Time',
+    'Belum diatur': 'Not set',
+    'Catat Transaksi': 'Record Transaction',
+    'Keterangan (Opsional)': 'Description (Optional)',
+    'Nominal': 'Amount',
+    'Nama Target': 'Target Name',
+    'Harga Total (Rp)': 'Total Price (Rp)',
+    'Nominal Rutin Menabung (Rp)': 'Routine Savings (Rp)',
+    'Siklus Menabung': 'Saving Cycle',
+    'Unggah Foto': 'Upload Photo',
+    'Ubah Foto': 'Change Photo',
+    'Target Impian Baru': 'New Dream Target',
+    'Target Impianmu Telah Tercapai': 'Your Dream Target has been Reached',
+    'Luar Biasa!': 'Awesome!',
+    'Hapus Target': 'Delete Target',
+    'Hapus': 'Delete',
+    'Riwayat Transaksi': 'Transaction History',
+  };
+  return translations[key] ?? key;
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().init();
@@ -335,10 +383,10 @@ class _HomePageState extends State<HomePage> {
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
         indicatorColor: const Color(0xFF2D3748).withOpacity(0.2),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: Color(0xFF2D3748)), label: 'Beranda'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF2D3748)), label: 'Riwayat'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings, color: Color(0xFF2D3748)), label: 'Pengaturan'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home, color: Color(0xFF2D3748)), label: tr(context, 'Beranda')),
+          NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long, color: Color(0xFF2D3748)), label: tr(context, 'Riwayat')),
+          NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings, color: Color(0xFF2D3748)), label: tr(context, 'Pengaturan')),
         ],
       ),
       floatingActionButton: _currentIndex == 0
@@ -349,7 +397,7 @@ class _HomePageState extends State<HomePage> {
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               icon: const Icon(Icons.add, size: 24),
-              label: const Text('Buat Target', style: TextStyle(fontWeight: FontWeight.normal)),
+              label: Text(tr(context, 'Buat Target'), style: const TextStyle(fontWeight: FontWeight.normal)),
             )
           : null,
     );
@@ -748,14 +796,14 @@ class TabunganScreen extends StatelessWidget {
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: target.gambarByte != null ? Colors.transparent : Colors.grey.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: target.gambarByte != null ? [
                                 BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
                               ] : [],
                               image: target.gambarByte != null ? DecorationImage(
                                 image: MemoryImage(target.gambarByte!),
-                                fit: BoxFit.contain,
+                                fit: BoxFit.cover,
                               ) : null
                             ),
                             child: target.gambarByte == null ? const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey) : null,
@@ -1367,19 +1415,18 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.language_rounded, color: Colors.blue)
                   ),
-                  title: const Text('Pilihan Bahasa', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text('Bahasa Indonesia', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                  title: Text(tr(context, 'Pilihan Bahasa'), style: const TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(themeProvider.language == 'id' ? 'Bahasa Indonesia' : 'English', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () {
-                    // Placeholder for future feature
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilihan bahasa akan tersedia segera.')));
+                    _showBahasaDialog(context, themeProvider);
                   },
                 ),
               ],
             ),
           ),
           const SizedBox(height: 32),
-          const Text('Notifikasi', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          Text(tr(context, 'Notifikasi'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -1508,6 +1555,78 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                           Navigator.pop(ctx);
                         },
                         child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showBahasaDialog(BuildContext context, ThemeProvider provider) {
+    String selectedLang = provider.language;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D3748) : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(tr(context, 'Pilih Bahasa'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                RadioListTile<String>(
+                  title: const Text('Bahasa Indonesia', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: 'id',
+                  groupValue: selectedLang,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDialogState(() => selectedLang = val!),
+                ),
+                RadioListTile<String>(
+                  title: const Text('English', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: 'en',
+                  groupValue: selectedLang,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDialogState(() => selectedLang = val!),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                        child: Text(tr(context, 'Batal'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2D3748),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          if (provider.language != selectedLang) {
+                            provider.setLanguage(selectedLang);
+                          }
+                          Navigator.pop(ctx);
+                        },
+                        child: Text(tr(context, 'Simpan'), style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
