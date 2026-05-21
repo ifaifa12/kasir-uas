@@ -21,6 +21,37 @@ class NotificationService {
       iOS: initializationSettingsIOS,
     );
     await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
+    await requestPermission();
+  }
+
+  Future<void> requestPermission() async {
+    if (kIsWeb) return;
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidImplementation?.requestNotificationsPermission();
+  }
+
+  Future<void> showImmediateNotification() async {
+    if (kIsWeb) return;
+    
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'immediate_reminder',
+      'Immediate Reminder',
+      channelDescription: 'Pengingat langsung untuk menabung',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+    await flutterLocalNotificationsPlugin.show(
+      id: 1,
+      title: 'Waktunya Menabung! ⏰',
+      body: 'Jangan lupa sisihkan uang untuk target tabunganmu hari ini.',
+      notificationDetails: notificationDetails,
+    );
   }
 
   Future<void> scheduleDailyReminder(int hour, int minute) async {

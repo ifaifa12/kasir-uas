@@ -29,7 +29,7 @@ class TabunganOnlineApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     // Aesthetic Color Palette
-    const primaryColor = Color(0xFF4C51BF); // Indigo-ish
+    const primaryColor = Color(0xFF2D3748); // Grayish black
     const lightBg = Color(0xFFF7FAFC); 
     const darkBg = Color(0xFF1A202C);
 
@@ -46,7 +46,7 @@ class TabunganOnlineApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: lightBg,
           surfaceTintColor: Colors.transparent,
-          centerTitle: true,
+          centerTitle: false,
           titleTextStyle: TextStyle(color: Color(0xFF2D3748), fontSize: 18, fontWeight: FontWeight.w700),
           iconTheme: IconThemeData(color: Color(0xFF2D3748)),
         ),
@@ -67,7 +67,7 @@ class TabunganOnlineApp extends StatelessWidget {
         appBarTheme: const AppBarTheme(
           backgroundColor: darkBg,
           surfaceTintColor: Colors.transparent,
-          centerTitle: true,
+          centerTitle: false,
           titleTextStyle: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
           iconTheme: IconThemeData(color: Colors.white),
         ),
@@ -78,7 +78,7 @@ class TabunganOnlineApp extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
       ),
-      themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: themeProvider.themeMode,
       home: const SplashScreen(),
     );
   }
@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _controller.forward();
     
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
       }
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF4C51BF), Color(0xFF6B46C1)],
+            colors: [Color(0xFF2D3748), Color(0xFF4A5568)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -150,7 +150,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.account_balance_wallet_rounded, size: 80, color: Color(0xFF4C51BF)),
+                    child: const Icon(Icons.account_balance_wallet_rounded, size: 80, color: Color(0xFF2D3748)),
                   ),
                   const SizedBox(height: 32),
                   Text(
@@ -334,21 +334,22 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        indicatorColor: const Color(0xFF4C51BF).withOpacity(0.2),
+        indicatorColor: const Color(0xFF2D3748).withOpacity(0.2),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: Color(0xFF4C51BF)), label: 'Beranda'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF4C51BF)), label: 'Riwayat'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings, color: Color(0xFF4C51BF)), label: 'Pengaturan'),
+          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home, color: Color(0xFF2D3748)), label: 'Beranda'),
+          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long, color: Color(0xFF2D3748)), label: 'Riwayat'),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings, color: Color(0xFF2D3748)), label: 'Pengaturan'),
         ],
       ),
       floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
+          ? FloatingActionButton.extended(
               onPressed: () => _showTambahTargetDialog(context),
-              backgroundColor: const Color(0xFF4C51BF),
+              backgroundColor: const Color(0xFF2D3748),
               foregroundColor: Colors.white,
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              child: const Icon(Icons.add, size: 28),
+              icon: const Icon(Icons.add, size: 24),
+              label: const Text('Buat Target', style: TextStyle(fontWeight: FontWeight.normal)),
             )
           : null,
     );
@@ -397,24 +398,24 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
                       ),
-                      child: selectedImage == null 
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center, 
-                            children: [
-                              Icon(Icons.add_photo_alternate_rounded, size: 48, color: Colors.grey.withOpacity(0.7)), 
-                              const SizedBox(height: 8),
-                              const Text('Unggah Foto Impianmu', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500))
-                            ]
-                          )
-                        : ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.memory(selectedImage!, fit: BoxFit.cover)),
-                    )
+                        child: selectedImage == null 
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center, 
+                              children: [
+                                Icon(Icons.add_photo_alternate_rounded, size: 48, color: Colors.grey.withOpacity(0.7)), 
+                                const SizedBox(height: 8),
+                                const Text('Unggah Foto', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500))
+                              ]
+                            )
+                          : ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.memory(selectedImage!, fit: BoxFit.contain)),
+                      )
                   ),
                   const SizedBox(height: 20),
                   
                   TextField(
                     controller: namaController,
                     decoration: InputDecoration(
-                      labelText: 'Nama Target (Cth: Beli Laptop)',
+                      hintText: 'Nama Target',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     ),
@@ -495,7 +496,7 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4C51BF),
+                            backgroundColor: const Color(0xFF2D3748),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -516,7 +517,7 @@ class _HomePageState extends State<HomePage> {
                               Navigator.pop(context);
                             }
                           },
-                          child: const Text('Buat Target', style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -573,17 +574,17 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid),
                       ),
-                      child: selectedImage == null 
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center, 
-                            children: [
-                              Icon(Icons.add_photo_alternate_rounded, size: 48, color: Colors.grey.withOpacity(0.7)), 
-                              const SizedBox(height: 8),
-                              const Text('Ubah Foto Impian', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500))
-                            ]
-                          )
-                        : ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.memory(selectedImage!, fit: BoxFit.cover)),
-                    )
+                        child: selectedImage == null 
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center, 
+                              children: [
+                                Icon(Icons.add_photo_alternate_rounded, size: 48, color: Colors.grey.withOpacity(0.7)), 
+                                const SizedBox(height: 8),
+                                const Text('Ubah Foto', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500))
+                              ]
+                            )
+                          : ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.memory(selectedImage!, fit: BoxFit.contain)),
+                      )
                   ),
                   const SizedBox(height: 20),
                   
@@ -670,7 +671,7 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF4C51BF),
+                            backgroundColor: const Color(0xFF2D3748),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -716,21 +717,11 @@ class TabunganScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Target Impian'),
+        title: const Text('Tabungan Online'),
+        centerTitle: false,
       ),
       body: daftarTarget.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.rocket_launch_rounded, size: 80, color: Colors.grey.withOpacity(0.3)),
-                  const SizedBox(height: 16),
-                  const Text('Belum ada target impian.', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  const SizedBox(height: 8),
-                  const Text('Klik tombol + di bawah untuk mulai!', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                ],
-              )
-            )
+          ? const SizedBox.shrink()
           : ListView.builder(
               padding: const EdgeInsets.only(bottom: 100, top: 12, left: 16, right: 16),
               itemCount: daftarTarget.length,
@@ -752,21 +743,22 @@ class TabunganScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (target.gambarByte != null)
                           Container(
                             height: 150,
                             width: double.infinity,
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
+                              boxShadow: target.gambarByte != null ? [
                                 BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
-                              ],
-                              image: DecorationImage(
+                              ] : [],
+                              image: target.gambarByte != null ? DecorationImage(
                                 image: MemoryImage(target.gambarByte!),
-                                fit: BoxFit.cover,
-                              )
+                                fit: BoxFit.contain,
+                              ) : null
                             ),
+                            child: target.gambarByte == null ? const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey) : null,
                           ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -805,7 +797,7 @@ class TabunganScreen extends StatelessWidget {
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit_rounded, color: Color(0xFF4C51BF), size: 22),
+                                  icon: const Icon(Icons.edit_rounded, color: Color(0xFF2D3748), size: 22),
                                   onPressed: () => onEdit(context, target),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
@@ -854,8 +846,8 @@ class TabunganScreen extends StatelessWidget {
                               percent: progress,
                               animation: true,
                               center: Text("${(progress * 100).toInt()}%", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                              progressColor: isTercapai ? Colors.green : const Color(0xFF4C51BF),
-                              backgroundColor: (isTercapai ? Colors.green : const Color(0xFF4C51BF)).withOpacity(0.15),
+                              progressColor: isTercapai ? Colors.green : const Color(0xFF2D3748),
+                              backgroundColor: (isTercapai ? Colors.green : const Color(0xFF2D3748)).withOpacity(0.15),
                               circularStrokeCap: CircularStrokeCap.round,
                             ),
                           ],
@@ -922,14 +914,14 @@ class TabunganScreen extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4C51BF),
+                                backgroundColor: const Color(0xFF2D3748),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 elevation: 0,
                               ),
                               onPressed: () => _showCatatTabunganDialog(context, target),
-                              child: const Text('Isi Tabungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              child: const Text('Menabung', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                             ),
                           )
                         else
@@ -985,16 +977,10 @@ class TabunganScreen extends StatelessWidget {
   }
 
   void _showCatatTabunganDialog(BuildContext context, TargetTabungan target) {
-    TextEditingController nominalController = TextEditingController();
+    TextEditingController nominalController = TextEditingController(text: target.nominalPengisian != null ? target.nominalPengisian!.toInt().toString() : '');
     TextEditingController ketController = TextEditingController();
     bool isTambah = true;
     
-    List<double> chipValues = [5000, 10000, 20000, 50000];
-    if (target.nominalPengisian != null && !chipValues.contains(target.nominalPengisian!)) {
-      chipValues.insert(0, target.nominalPengisian!);
-    }
-    final formatRupiah = NumberFormat.currency(locale: 'id', symbol: '', decimalDigits: 0);
-
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -1023,7 +1009,7 @@ class TabunganScreen extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: isTambah ? const Color(0xFF4C51BF) : Colors.transparent,
+                              color: isTambah ? const Color(0xFF2D3748) : Colors.transparent,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Center(child: Text('Menabung', style: TextStyle(fontWeight: FontWeight.bold, color: isTambah ? Colors.white : Colors.grey))),
@@ -1058,24 +1044,6 @@ class TabunganScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
-                const SizedBox(height: 16),
-                
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  alignment: WrapAlignment.center,
-                  children: chipValues.take(4).map((value) {
-                    return ActionChip(
-                      label: Text(formatRupiah.format(value), style: const TextStyle(fontWeight: FontWeight.w600)),
-                      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A202C) : Colors.grey.shade100,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
-                      onPressed: () {
-                        nominalController.text = value.toInt().toString();
-                      },
-                    );
-                  }).toList(),
-                ),
-                
                 const SizedBox(height: 20),
                 TextField(
                   controller: ketController,
@@ -1101,7 +1069,7 @@ class TabunganScreen extends StatelessWidget {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isTambah ? const Color(0xFF4C51BF) : Colors.redAccent,
+                          backgroundColor: isTambah ? const Color(0xFF2D3748) : Colors.redAccent,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1170,7 +1138,7 @@ class TabunganScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4C51BF),
+                    backgroundColor: const Color(0xFF2D3748),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1201,6 +1169,7 @@ class RiwayatScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Transaksi'),
+        centerTitle: false,
       ),
       body: !hasAnyRiwayat
           ? Center(
@@ -1230,7 +1199,7 @@ class RiwayatScreen extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12, top: 8),
-                      child: Text(target.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF4C51BF))),
+                      child: Text(target.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF2D3748))),
                     ),
                     ...riwayatTarget.map((trx) {
                       bool isTambah = trx.jumlah > 0;
@@ -1325,8 +1294,12 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     }
     await prefs.setBool('isReminderActive', isReminderActive);
 
-    if (isReminderActive && reminderTime != null) {
-      await NotificationService().scheduleDailyReminder(reminderTime!.hour, reminderTime!.minute);
+    if (isReminderActive) {
+      await NotificationService().requestPermission();
+      if (reminderTime != null) {
+        await NotificationService().scheduleDailyReminder(reminderTime!.hour, reminderTime!.minute);
+      }
+      await NotificationService().showImmediateNotification();
     } else {
       await NotificationService().cancelAllReminders();
     }
@@ -1340,6 +1313,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pengaturan'),
+        centerTitle: false,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -1360,14 +1334,45 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFF4C51BF).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.palette_rounded, color: Color(0xFF4C51BF))
+                    decoration: BoxDecoration(color: const Color(0xFF2D3748).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.palette_rounded, color: Color(0xFF2D3748))
                   ),
                   title: const Text('Tema Aplikasi', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(isDark ? 'Gelap' : 'Terang', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () {
                     _showTemaDialog(context, themeProvider);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          const Text('Bahasa', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2D3748) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+              ]
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.language_rounded, color: Colors.blue)
+                  ),
+                  title: const Text('Pilihan Bahasa', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text('Bahasa Indonesia', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () {
+                    // Placeholder for future feature
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilihan bahasa akan tersedia segera.')));
                   },
                 ),
               ],
@@ -1400,7 +1405,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       setState(() => isReminderActive = val);
                       _saveReminderSettings();
                     },
-                    activeColor: const Color(0xFF4C51BF),
+                    activeColor: const Color(0xFF2D3748),
                   ),
                 ),
                 if (isReminderActive) ...[
@@ -1436,7 +1441,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
   }
 
   void _showTemaDialog(BuildContext context, ThemeProvider provider) {
-    bool isDarkSelected = provider.isDarkMode;
+    ThemeMode selectedMode = provider.themeMode;
 
     showDialog(
       context: context,
@@ -1452,21 +1457,29 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               children: [
                 const Text('Pilih Tema', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
-                RadioListTile<bool>(
-                  title: const Text('Terang', style: TextStyle(fontWeight: FontWeight.w600)),
-                  value: false,
-                  groupValue: isDarkSelected,
-                  activeColor: const Color(0xFF4C51BF),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Sistem Default', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.system,
+                  groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
                   contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setDialogState(() => isDarkSelected = val!),
+                  onChanged: (val) => setDialogState(() => selectedMode = val!),
                 ),
-                RadioListTile<bool>(
-                  title: const Text('Gelap', style: TextStyle(fontWeight: FontWeight.w600)),
-                  value: true,
-                  groupValue: isDarkSelected,
-                  activeColor: const Color(0xFF4C51BF),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Terang', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.light,
+                  groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
                   contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setDialogState(() => isDarkSelected = val!),
+                  onChanged: (val) => setDialogState(() => selectedMode = val!),
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Gelap', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.dark,
+                  groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDialogState(() => selectedMode = val!),
                 ),
                 const SizedBox(height: 24),
                 Row(
@@ -1482,15 +1495,15 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4C51BF),
+                          backgroundColor: const Color(0xFF2D3748),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
                         ),
                         onPressed: () {
-                          if (provider.isDarkMode != isDarkSelected) {
-                            provider.toggleTheme();
+                          if (provider.themeMode != selectedMode) {
+                            provider.setThemeMode(selectedMode);
                           }
                           Navigator.pop(ctx);
                         },
