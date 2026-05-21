@@ -10,68 +10,7 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
 
-const languageNames = {
-  'id': 'Bahasa Indonesia',
-  'en': 'English',
-  'es': 'Español',
-  'fr': 'Français',
-  'ja': '日本語',
-  'ko': '한국어',
-  'zh': '中文',
-  'ar': 'العربية'
-};
-
 String tr(BuildContext context, String key) {
-  final lang = Provider.of<ThemeProvider>(context).language;
-  if (lang == 'id') return key;
-  
-  const translations = {
-    'Beranda': {'en': 'Home', 'es': 'Inicio', 'fr': 'Accueil', 'ja': 'ホーム', 'ko': '홈', 'zh': '首页', 'ar': 'الرئيسية'},
-    'Riwayat': {'en': 'History', 'es': 'Historial', 'fr': 'Historique', 'ja': '履歴', 'ko': '기록', 'zh': '历史', 'ar': 'سجل'},
-    'Pengaturan': {'en': 'Settings', 'es': 'Ajustes', 'fr': 'Paramètres', 'ja': '設定', 'ko': '설정', 'zh': '设置', 'ar': 'إعدادات'},
-    'Tabungan Online': {'en': 'Online Savings', 'es': 'Ahorros', 'fr': 'Épargne', 'ja': 'オンライン貯金', 'ko': '온라인 저축', 'zh': '在线储蓄', 'ar': 'مدخرات'},
-    'Buat Target': {'en': 'New Target', 'es': 'Nuevo', 'fr': 'Nouveau', 'ja': '目標作成', 'ko': '목표 만들기', 'zh': '新建目标', 'ar': 'هدف جديد'},
-    'Simpan': {'en': 'Save', 'es': 'Guardar', 'fr': 'Enregistrer', 'ja': '保存', 'ko': '저장', 'zh': '保存', 'ar': 'حفظ'},
-    'Menabung': {'en': 'Save', 'es': 'Ahorrar', 'fr': 'Épargner', 'ja': '貯金する', 'ko': '저축하기', 'zh': '存钱', 'ar': 'توفير'},
-    'Tarik Dana': {'en': 'Withdraw', 'es': 'Retirar', 'fr': 'Retirer', 'ja': '引き出し', 'ko': '출금', 'zh': '取款', 'ar': 'سحب'},
-    'Terkumpul': {'en': 'Collected', 'es': 'Recogido', 'fr': 'Collecté', 'ja': '集まった', 'ko': '모인 금액', 'zh': '已收集', 'ar': 'مُجمع'},
-    'Kekurangan': {'en': 'Remaining', 'es': 'Restante', 'fr': 'Restant', 'ja': '残り', 'ko': '남은 금액', 'zh': '剩余', 'ar': 'المتبقي'},
-    'Tanggal Dibuat': {'en': 'Created Date', 'es': 'Fecha', 'fr': 'Date', 'ja': '作成日', 'ko': '생성일', 'zh': '创建日期', 'ar': 'تاريخ الإنشاء'},
-    'Estimasi': {'en': 'Estimate', 'es': 'Estimado', 'fr': 'Estimation', 'ja': '予測', 'ko': '예상', 'zh': '估计', 'ar': 'تقدير'},
-    'Pilih Tema': {'en': 'Select Theme', 'es': 'Tema', 'fr': 'Thème', 'ja': 'テーマを選択', 'ko': '테마 선택', 'zh': '选择主题', 'ar': 'اختر السمة'},
-    'Terang': {'en': 'Light', 'es': 'Claro', 'fr': 'Clair', 'ja': 'ライト', 'ko': '밝게', 'zh': '亮色', 'ar': 'فاتح'},
-    'Gelap': {'en': 'Dark', 'es': 'Oscuro', 'fr': 'Sombre', 'ja': 'ダーク', 'ko': '어둡게', 'zh': '暗色', 'ar': 'داكن'},
-    'Sistem Default': {'en': 'System', 'es': 'Sistema', 'fr': 'Système', 'ja': 'システム', 'ko': '시스템', 'zh': '系统', 'ar': 'نظام'},
-    'Batal': {'en': 'Cancel', 'es': 'Cancelar', 'fr': 'Annuler', 'ja': 'キャンセル', 'ko': '취소', 'zh': '取消', 'ar': 'إلغاء'},
-    'Bahasa': {'en': 'Language', 'es': 'Idioma', 'fr': 'Langue', 'ja': '言語', 'ko': '언어', 'zh': '语言', 'ar': 'اللغة'},
-    'Pilihan Bahasa': {'en': 'Language Options', 'es': 'Opciones', 'fr': 'Options', 'ja': '言語設定', 'ko': '언어 옵션', 'zh': '语言选项', 'ar': 'خيارات اللغة'},
-    'Tema Aplikasi': {'en': 'App Theme', 'es': 'Tema de App', 'fr': 'Thème', 'ja': 'アプリテーマ', 'ko': '앱 테마', 'zh': '应用主题', 'ar': 'سمة التطبيق'},
-    'Notifikasi': {'en': 'Notifications', 'es': 'Notificaciones', 'fr': 'Notifications', 'ja': '通知', 'ko': '알림', 'zh': '通知', 'ar': 'إشعارات'},
-    'Pengingat Menabung': {'en': 'Savings Reminder', 'es': 'Recordatorio', 'fr': 'Rappel', 'ja': '貯金リマインダー', 'ko': '저축 알림', 'zh': '储蓄提醒', 'ar': 'تذكير'},
-    'Waktu Pengingat': {'en': 'Reminder Time', 'es': 'Hora', 'fr': 'Heure', 'ja': '通知時間', 'ko': '알림 시간', 'zh': '提醒时间', 'ar': 'وقت التذكير'},
-    'Belum diatur': {'en': 'Not set', 'es': 'No establecido', 'fr': 'Non défini', 'ja': '未設定', 'ko': '미설정', 'zh': '未设置', 'ar': 'غير محدد'},
-    'Catat Transaksi': {'en': 'Record Transaction', 'es': 'Transacción', 'fr': 'Transaction', 'ja': '取引を記録', 'ko': '거래 기록', 'zh': '记录交易', 'ar': 'تسجيل المعاملة'},
-    'Keterangan (Opsional)': {'en': 'Description (Optional)', 'es': 'Descripción', 'fr': 'Description', 'ja': '説明 (任意)', 'ko': '설명 (선택)', 'zh': '描述（可选）', 'ar': 'الوصف (اختياري)'},
-    'Nominal': {'en': 'Amount', 'es': 'Monto', 'fr': 'Montant', 'ja': '金額', 'ko': '금액', 'zh': '金额', 'ar': 'المبلغ'},
-    'Nama Target': {'en': 'Target Name', 'es': 'Nombre', 'fr': 'Nom', 'ja': '目標名', 'ko': '목표 이름', 'zh': '目标名称', 'ar': 'اسم الهدف'},
-    'Harga Total (Rp)': {'en': 'Total Price (Rp)', 'es': 'Precio', 'fr': 'Prix', 'ja': '合計金額 (Rp)', 'ko': '총 가격 (Rp)', 'zh': '总价 (Rp)', 'ar': 'السعر الإجمالي'},
-    'Nominal Rutin Menabung (Rp)': {'en': 'Routine Savings (Rp)', 'es': 'Ahorro Rutina', 'fr': 'Épargne Routine', 'ja': '定期貯金額', 'ko': '정기 저축 금액', 'zh': '日常储蓄 (Rp)', 'ar': 'التوفير الروتيني'},
-    'Siklus Menabung': {'en': 'Saving Cycle', 'es': 'Ciclo', 'fr': 'Cycle', 'ja': '貯金サイクル', 'ko': '저축 주기', 'zh': '储蓄周期', 'ar': 'دورة التوفير'},
-    'Unggah Foto': {'en': 'Upload Photo', 'es': 'Subir Foto', 'fr': 'Télécharger', 'ja': '写真をアップロード', 'ko': '사진 업로드', 'zh': '上传照片', 'ar': 'رفع صورة'},
-    'Ubah Foto': {'en': 'Change Photo', 'es': 'Cambiar Foto', 'fr': 'Changer', 'ja': '写真を変更', 'ko': '사진 변경', 'zh': '更改照片', 'ar': 'تغيير الصورة'},
-    'Target Impian Baru': {'en': 'New Dream Target', 'es': 'Nuevo Sueño', 'fr': 'Nouveau Rêve', 'ja': '新しい夢の目標', 'ko': '새로운 꿈의 목표', 'zh': '新的梦想目标', 'ar': 'هدف حلم جديد'},
-    'Target Impianmu Telah Tercapai': {'en': 'Your Dream Target has been Reached', 'es': 'Alcanzado', 'fr': 'Atteint', 'ja': '夢の目標を達成しました', 'ko': '꿈의 목표를 달성했습니다', 'zh': '您的梦想目标已实现', 'ar': 'تم الوصول للهدف'},
-    'Luar Biasa!': {'en': 'Awesome!', 'es': '¡Increíble!', 'fr': 'Génial !', 'ja': '素晴らしい！', 'ko': '대단해요!', 'zh': '太棒了！', 'ar': 'رائع!'},
-    'Hapus Target': {'en': 'Delete Target', 'es': 'Borrar', 'fr': 'Supprimer', 'ja': '目標を削除', 'ko': '목표 삭제', 'zh': '删除目标', 'ar': 'حذف الهدف'},
-    'Hapus': {'en': 'Delete', 'es': 'Borrar', 'fr': 'Supprimer', 'ja': '削除', 'ko': '삭제', 'zh': '删除', 'ar': 'حذف'},
-    'Riwayat Transaksi': {'en': 'Transaction History', 'es': 'Historial', 'fr': 'Historique', 'ja': '取引履歴', 'ko': '거래 내역', 'zh': '交易记录', 'ar': 'سجل المعاملات'},
-    'Belum ada target impian': {'en': 'No dream target yet', 'es': 'Sin objetivos', 'fr': 'Aucun objectif', 'ja': '夢の目標がまだありません', 'ko': '아직 꿈의 목표가 없습니다', 'zh': '尚未设置梦想目标', 'ar': 'لا يوجد هدف حلم بعد'},
-    'Pilih Bahasa': {'en': 'Select Language', 'es': 'Idioma', 'fr': 'Langue', 'ja': '言語を選択', 'ko': '언어 선택', 'zh': '选择语言', 'ar': 'اختر اللغة'}
-  };
-  
-  if (translations.containsKey(key)) {
-    return (translations[key] as Map<String, String>)[lang] ?? key;
-  }
   return key;
 }
 
@@ -1422,36 +1361,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          const Text('Bahasa', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
-          const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2D3748) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
-              ]
-            ),
-            child: Column(
-              children: [
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.language_rounded, color: Colors.blue)
-                  ),
-                  title: Text(tr(context, 'Pilihan Bahasa'), style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(languageNames[themeProvider.language] ?? 'Bahasa Indonesia', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () {
-                    _showBahasaDialog(context, themeProvider);
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
           Text(tr(context, 'Notifikasi'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
           const SizedBox(height: 12),
           Container(
@@ -1591,69 +1500,4 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
         ),
       ),
     );
-  }
-
-  void _showBahasaDialog(BuildContext context, ThemeProvider provider) {
-    String selectedLang = provider.language;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D3748) : Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(tr(context, 'Pilih Bahasa'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                ...languageNames.entries.map((entry) => RadioListTile<String>(
-                  title: Text(entry.value, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  value: entry.key,
-                  groupValue: selectedLang,
-                  activeColor: const Color(0xFF2D3748),
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setDialogState(() => selectedLang = val!),
-                )),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                        child: Text(tr(context, 'Batal'), style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2D3748),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          if (provider.language != selectedLang) {
-                            provider.setLanguage(selectedLang);
-                          }
-                          Navigator.pop(ctx);
-                        },
-                        child: Text(tr(context, 'Simpan'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+  }}
