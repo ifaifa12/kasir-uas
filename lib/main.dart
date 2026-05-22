@@ -344,12 +344,14 @@ class _HomePageState extends State<HomePage> {
         daftarTarget: daftarTarget, 
         onUpdate: _updateState,
         onEdit: _showEditTargetDialog,
+        onOpenSettings: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => PengaturanScreen(
+            userName: userName,
+            onNameChanged: _changeUserName,
+          )));
+        },
       ),
       RiwayatScreen(daftarTarget: daftarTarget, onUpdate: _updateState),
-      PengaturanScreen(
-        userName: userName,
-        onNameChanged: _changeUserName,
-      ),
     ];
 
     return Scaffold(
@@ -361,7 +363,6 @@ class _HomePageState extends State<HomePage> {
         destinations: [
           NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home, color: Color(0xFF2D3748)), label: tr(context, 'Beranda')),
           NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long, color: Color(0xFF2D3748)), label: tr(context, 'Riwayat')),
-          NavigationDestination(icon: const Icon(Icons.settings_outlined), selectedIcon: const Icon(Icons.settings, color: Color(0xFF2D3748)), label: tr(context, 'Pengaturan')),
         ],
       ),
       floatingActionButton: _currentIndex == 0
@@ -733,7 +734,8 @@ class TabunganScreen extends StatelessWidget {
   final List<TargetTabungan> daftarTarget;
   final VoidCallback onUpdate;
   final Function(BuildContext, TargetTabungan) onEdit;
-  const TabunganScreen({super.key, required this.userName, required this.daftarTarget, required this.onUpdate, required this.onEdit});
+  final VoidCallback onOpenSettings;
+  const TabunganScreen({super.key, required this.userName, required this.daftarTarget, required this.onUpdate, required this.onEdit, required this.onOpenSettings});
 
   @override
   Widget build(BuildContext context) {
@@ -750,6 +752,72 @@ class TabunganScreen extends StatelessWidget {
         ),
         centerTitle: false,
         toolbarHeight: 70,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onSelected: (value) {
+              if (value == 'Pengaturan') {
+                onOpenSettings();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fitur $value segera hadir!'), duration: const Duration(seconds: 2)));
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                value: 'Pengaturan',
+                child: Row(
+                  children: [
+                    Icon(Icons.settings_outlined, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
+                    const SizedBox(width: 12),
+                    const Text('Pengaturan'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Beri Nilai Aplikasi',
+                child: Row(
+                  children: [
+                    Icon(Icons.star_border_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
+                    const SizedBox(width: 12),
+                    const Text('Beri Nilai Aplikasi'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Gift Untuk Developer',
+                child: Row(
+                  children: [
+                    Icon(Icons.card_giftcard_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
+                    const SizedBox(width: 12),
+                    const Text('Gift Untuk Developer'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Backup Restore',
+                child: Row(
+                  children: [
+                    Icon(Icons.storage_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
+                    const SizedBox(width: 12),
+                    const Text('Backup Restore'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'Open Source License',
+                child: Row(
+                  children: [
+                    Icon(Icons.code_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
+                    const SizedBox(width: 12),
+                    const Text('Open Source License'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: daftarTarget.isEmpty
           ? Center(
