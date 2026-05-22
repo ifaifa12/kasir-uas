@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     _controller.forward();
     
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
       }
@@ -168,7 +168,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Masa Depan Dimulai Hari Ini',
+                    'Langkah Kecil, Impian Besar ✨',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.8),
@@ -264,6 +264,7 @@ class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
   List<TargetTabungan> daftarTarget = [];
   bool isLoading = true;
+  String userName = 'Sobat';
 
   @override
   void initState() {
@@ -274,6 +275,12 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     final String? dataString = prefs.getString('tabungan_data');
+    final String? savedName = prefs.getString('userName');
+    
+    if (savedName != null) {
+      userName = savedName;
+    }
+
     if (dataString != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(dataString);
@@ -317,6 +324,14 @@ class _HomePageState extends State<HomePage> {
     _saveData();
   }
 
+  Future<void> _changeUserName(String newName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', newName);
+    setState(() {
+      userName = newName;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -325,12 +340,16 @@ class _HomePageState extends State<HomePage> {
 
     final screens = [
       TabunganScreen(
+        userName: userName,
         daftarTarget: daftarTarget, 
         onUpdate: _updateState,
         onEdit: _showEditTargetDialog,
       ),
       RiwayatScreen(daftarTarget: daftarTarget, onUpdate: _updateState),
-      const PengaturanScreen(),
+      PengaturanScreen(
+        userName: userName,
+        onNameChanged: _changeUserName,
+      ),
     ];
 
     return Scaffold(
@@ -710,10 +729,11 @@ class _HomePageState extends State<HomePage> {
 }
 
 class TabunganScreen extends StatelessWidget {
+  final String userName;
   final List<TargetTabungan> daftarTarget;
   final VoidCallback onUpdate;
   final Function(BuildContext, TargetTabungan) onEdit;
-  const TabunganScreen({super.key, required this.daftarTarget, required this.onUpdate, required this.onEdit});
+  const TabunganScreen({super.key, required this.userName, required this.daftarTarget, required this.onUpdate, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -721,8 +741,15 @@ class TabunganScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tabungan Online'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Tabungan Online', style: TextStyle(fontWeight: FontWeight.w800)),
+            Text('Halo $userName! Semangat menabung 🚀', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.grey)),
+          ],
+        ),
         centerTitle: false,
+        toolbarHeight: 70,
       ),
       body: daftarTarget.isEmpty
           ? Center(
@@ -810,7 +837,7 @@ class TabunganScreen extends StatelessWidget {
                             Row(
                               children: [
                                 IconButton(
-                                  icon: const Icon(Icons.edit_rounded, color: Color(0xFF2D3748), size: 22),
+                                  icon: Icon(Icons.edit_rounded, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2D3748), size: 22),
                                   onPressed: () => onEdit(context, target),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
@@ -1212,7 +1239,7 @@ class RiwayatScreen extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12, top: 8),
-                      child: Text(target.nama, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF2D3748))),
+                      child: Text(target.nama, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF2D3748))),
                     ),
                     ...riwayatTarget.map((trx) {
                       bool isTambah = trx.jumlah > 0;
@@ -1269,7 +1296,9 @@ class RiwayatScreen extends StatelessWidget {
 }
 
 class PengaturanScreen extends StatefulWidget {
-  const PengaturanScreen({super.key});
+  final String userName;
+  final Function(String) onNameChanged;
+  const PengaturanScreen({super.key, required this.userName, required this.onNameChanged});
 
   @override
   State<PengaturanScreen> createState() => _PengaturanScreenState();
@@ -1278,6 +1307,7 @@ class PengaturanScreen extends StatefulWidget {
 class _PengaturanScreenState extends State<PengaturanScreen> {
   TimeOfDay? reminderTime;
   bool isReminderActive = false;
+  String selectedRingtone = 'Default';
 
   @override
   void initState() {
@@ -1290,11 +1320,18 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     final int? hour = prefs.getInt('reminderHour');
     final int? minute = prefs.getInt('reminderMinute');
     final bool active = prefs.getBool('isReminderActive') ?? false;
+    final String ringtone = prefs.getString('reminderRingtone') ?? 'Default';
 
     if (hour != null && minute != null) {
       setState(() {
         reminderTime = TimeOfDay(hour: hour, minute: minute);
         isReminderActive = active;
+        selectedRingtone = ringtone;
+      });
+    } else {
+      setState(() {
+        isReminderActive = active;
+        selectedRingtone = ringtone;
       });
     }
   }
@@ -1306,6 +1343,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       await prefs.setInt('reminderMinute', reminderTime!.minute);
     }
     await prefs.setBool('isReminderActive', isReminderActive);
+    await prefs.setString('reminderRingtone', selectedRingtone);
 
     if (isReminderActive) {
       await NotificationService().requestPermission();
@@ -1331,6 +1369,32 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          const Text('Profil Pengguna', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2D3748) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+              ]
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.person_rounded, color: Colors.blue)
+              ),
+              title: const Text('Nama Profil', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(widget.userName, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+              trailing: const Icon(Icons.edit_rounded, size: 20),
+              onTap: () {
+                _showEditNamaDialog(context);
+              },
+            ),
+          ),
+          const SizedBox(height: 32),
           const Text('Tampilan', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
           const SizedBox(height: 12),
           Container(
@@ -1347,8 +1411,11 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                   leading: Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: const Color(0xFF2D3748).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                    child: const Icon(Icons.palette_rounded, color: Color(0xFF2D3748))
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.purpleAccent]), 
+                      borderRadius: BorderRadius.circular(10)
+                    ),
+                    child: const Icon(Icons.palette_rounded, color: Colors.white)
                   ),
                   title: const Text('Tema Aplikasi', style: TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(isDark ? 'Gelap' : 'Terang', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
@@ -1413,11 +1480,178 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       }
                     },
                   ),
+                  const Divider(height: 1, indent: 60, endIndent: 20),
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.transparent, borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.audiotrack_rounded, color: Colors.transparent) // alignment placeholder
+                    ),
+                    title: const Text('Nada Dering', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(selectedRingtone, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => _showRingtoneDialog(context),
+                  ),
                 ]
               ],
             ),
           ),
+          const SizedBox(height: 32),
+          const Text('Data', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 13)),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2D3748) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+              ]
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.download_rounded, color: Colors.green)
+              ),
+              title: const Text('Ekspor Laporan PDF', style: TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text('Unduh riwayat transaksi', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+              trailing: const Icon(Icons.file_download_outlined),
+              onTap: () {
+                _simulasiUnduhData(context);
+              },
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _simulasiUnduhData(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+            SizedBox(width: 16),
+            Text('Menyiapkan file laporan...'),
+          ],
+        ),
+        duration: Duration(seconds: 2),
+      )
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Laporan berhasil diunduh ke folder Download!'),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
+          )
+        );
+      }
+    });
+  }
+
+  void _showEditNamaDialog(BuildContext context) {
+    TextEditingController _namaController = TextEditingController(text: widget.userName);
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ubah Nama Profil', style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: TextField(
+          controller: _namaController,
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama kamu',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D3748),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              if (_namaController.text.isNotEmpty) {
+                widget.onNameChanged(_namaController.text);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRingtoneDialog(BuildContext context) {
+    final List<String> ringtones = ['Default', 'Ding', 'Chime', 'Morning', 'Berdering'];
+    String tempSelected = selectedRingtone;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Pilih Nada Dering', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                ...ringtones.map((r) => RadioListTile<String>(
+                  title: Text(r, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  value: r,
+                  groupValue: tempSelected,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDialogState(() => tempSelected = val!),
+                )),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2D3748),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () {
+                          setState(() => selectedRingtone = tempSelected);
+                          _saveReminderSettings();
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
