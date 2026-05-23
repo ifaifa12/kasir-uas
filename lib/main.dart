@@ -7,6 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
 
@@ -650,6 +653,7 @@ class TabunganScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Tabungan Online', style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
             Text('Halo $userName! Semangat menabung 🚀', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: Colors.grey)),
           ],
         ),
@@ -703,217 +707,116 @@ class TabunganScreen extends StatelessWidget {
                 int daysRemaining = 0;
                 if (target.tanggalTarget != null) {
                   daysRemaining = target.tanggalTarget!.difference(DateTime.now()).inDays;
+                  if (daysRemaining < 0) daysRemaining = 0;
                 }
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailTargetScreen(
+                          target: target,
+                          daftarTarget: daftarTarget,
+                          onUpdate: onUpdate,
+                          onEdit: onEdit,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Nama target
+                          Text(
+                            target.nama,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 14),
+                          // Gambar / placeholder
                           Container(
-                            height: 150,
+                            height: 140,
                             width: double.infinity,
-                            margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
-                              color: target.gambarByte != null ? Colors.transparent : Colors.grey.withOpacity(0.1),
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF1A202C)
+                                  : const Color(0xFFEDF2F7),
                               borderRadius: BorderRadius.circular(16),
-                              boxShadow: target.gambarByte != null ? [
-                                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
-                              ] : [],
-                              image: target.gambarByte != null ? DecorationImage(
-                                image: MemoryImage(target.gambarByte!),
-                                fit: BoxFit.cover,
-                              ) : null
-                            ),
-                            child: target.gambarByte == null ? const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey) : null,
-                          ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          target.nama,
-                                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (isTercapai)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.withOpacity(0.1), 
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: Colors.green.withOpacity(0.5))
-                                      ),
-                                      child: const Text('✨ TERCAPAI', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w800)),
+                              image: target.gambarByte != null
+                                  ? DecorationImage(
+                                      image: MemoryImage(target.gambarByte!),
+                                      fit: BoxFit.cover,
                                     )
-                                ],
-                              ),
+                                  : null,
                             ),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(Icons.edit_rounded, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF2D3748), size: 22),
-                                  onPressed: () => onEdit(context, target),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                                const SizedBox(width: 16),
-                                IconButton(
-                                  icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 22),
-                                  onPressed: () => _showHapusDialog(context, target),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                              ],
-                            )
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  formatRupiah.format(target.nominalTarget),
-                                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(6)
-                                  ),
-                                  child: Text(
-                                    target.nominalPengisian != null 
-                                      ? '${formatRupiah.format(target.nominalPengisian)} / ${target.tipeTarget ?? "Isi"}' 
-                                      : 'Belum diatur',
-                                    style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            CircularPercentIndicator(
-                              radius: 38.0,
-                              lineWidth: 6.0,
-                              percent: progress,
-                              animation: true,
-                              center: Text("${(progress * 100).toInt()}%", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
-                              progressColor: isTercapai ? Colors.green : const Color(0xFF2D3748),
-                              backgroundColor: (isTercapai ? Colors.green : const Color(0xFF2D3748)).withOpacity(0.15),
-                              circularStrokeCap: CircularStrokeCap.round,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Tanggal Dibuat', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 4),
-                                Text(DateFormat('dd MMM yyyy').format(DateTime.now()), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)), 
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text('Estimasi', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-                                const SizedBox(height: 4),
-                                Text(target.tanggalTarget != null ? '${daysRemaining > 0 ? daysRemaining : 0} Hari' : '-', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A202C) : const Color(0xFFF7FAFC),
-                            borderRadius: BorderRadius.circular(16),
+                            child: target.gambarByte == null
+                                ? const Center(
+                                    child: Icon(Icons.landscape_rounded, size: 56, color: Colors.grey),
+                                  )
+                                : null,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          const SizedBox(height: 16),
+                          // Nominal + progress
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Column(
-                                children: [
-                                  const Text('Terkumpul', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    formatRupiah.format(target.saldoSekarang),
-                                    style: const TextStyle(fontSize: 15, color: Colors.green, fontWeight: FontWeight.w800),
-                                  ),
-                                ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      formatRupiah.format(target.nominalTarget),
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      target.nominalPengisian != null
+                                          ? '${formatRupiah.format(target.nominalPengisian)} ${target.tipeTarget ?? "Per-isi"}'
+                                          : 'Belum diatur',
+                                      style: TextStyle(fontSize: 13, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.3)),
-                              Column(
-                                children: [
-                                  const Text('Kekurangan', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    sisa > 0 ? formatRupiah.format(sisa) : 'Rp0',
-                                    style: const TextStyle(fontSize: 15, color: Colors.redAccent, fontWeight: FontWeight.w800),
-                                  ),
-                                ],
+                              CircularPercentIndicator(
+                                radius: 28.0,
+                                lineWidth: 5.0,
+                                percent: progress,
+                                animation: true,
+                                center: Text(
+                                  "${(progress * 100).toInt()}%",
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                ),
+                                progressColor: isTercapai ? Colors.green : const Color(0xFF2D3748),
+                                backgroundColor: (isTercapai ? Colors.green : const Color(0xFF2D3748)).withValues(alpha: 0.15),
+                                circularStrokeCap: CircularStrokeCap.round,
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (!isTercapai)
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2D3748),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                elevation: 0,
+                          // Divider + estimasi hari
+                          const Divider(height: 28),
+                          Center(
+                            child: Text(
+                              isTercapai
+                                  ? '✨ Target Tercapai!'
+                                  : target.tanggalTarget != null
+                                      ? '$daysRemaining Hari Lagi'
+                                      : 'Tanpa batas waktu',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: isTercapai ? Colors.green : Theme.of(context).textTheme.bodyLarge?.color,
                               ),
-                              onPressed: () => _showCatatTabunganDialog(context, target),
-                              child: const Text('Menabung', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                          )
-                        else
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.green.withOpacity(0.3)),
-                            ),
-                            child: const Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
-                                  SizedBox(width: 8),
-                                  Text('Target Berhasil Dicapai!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16)),
-                                ],
-                              )
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -1664,3 +1567,564 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
       ),
     );
   }}
+
+class DetailTargetScreen extends StatefulWidget {
+  final TargetTabungan target;
+  final List<TargetTabungan> daftarTarget;
+  final VoidCallback onUpdate;
+  final Function(BuildContext, TargetTabungan) onEdit;
+
+  const DetailTargetScreen({
+    super.key,
+    required this.target,
+    required this.daftarTarget,
+    required this.onUpdate,
+    required this.onEdit,
+  });
+
+  @override
+  State<DetailTargetScreen> createState() => _DetailTargetScreenState();
+}
+
+class _DetailTargetScreenState extends State<DetailTargetScreen> {
+  TimeOfDay? reminderTime;
+  bool isReminderActive = false;
+  String selectedRingtone = 'Default';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminderSettings();
+  }
+
+  Future<void> _loadReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? hour = prefs.getInt('reminderHour');
+    final int? minute = prefs.getInt('reminderMinute');
+    final bool active = prefs.getBool('isReminderActive') ?? false;
+    final String ringtone = prefs.getString('reminderRingtone') ?? 'Default';
+
+    if (hour != null && minute != null) {
+      setState(() {
+        reminderTime = TimeOfDay(hour: hour, minute: minute);
+        isReminderActive = active;
+        selectedRingtone = ringtone;
+      });
+    } else {
+      setState(() {
+        isReminderActive = active;
+        selectedRingtone = ringtone;
+      });
+    }
+  }
+
+  Future<void> _saveReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (reminderTime != null) {
+      await prefs.setInt('reminderHour', reminderTime!.hour);
+      await prefs.setInt('reminderMinute', reminderTime!.minute);
+    }
+    await prefs.setBool('isReminderActive', isReminderActive);
+    await prefs.setString('reminderRingtone', selectedRingtone);
+
+    if (isReminderActive) {
+      await NotificationService().requestPermission();
+      if (reminderTime != null) {
+        await NotificationService().scheduleDailyReminder(reminderTime!.hour, reminderTime!.minute);
+      }
+    } else {
+      await NotificationService().cancelAllReminders();
+    }
+  }
+
+  void _showHapusDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Hapus Target", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text("Apakah kamu yakin ingin menghapus target impian ini? Data yang terhapus tidak dapat dikembalikan."),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Batal", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              widget.daftarTarget.remove(widget.target);
+              widget.onUpdate();
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text("Hapus", style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+    double sisa = widget.target.nominalTarget - widget.target.saldoSekarang;
+    double progress = (widget.target.saldoSekarang / widget.target.nominalTarget).clamp(0.0, 1.0);
+    bool isTercapai = sisa <= 0;
+
+    int daysRemaining = 0;
+    if (widget.target.tanggalTarget != null) {
+      daysRemaining = widget.target.tanggalTarget!.difference(DateTime.now()).inDays;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.target.nama, style: const TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.edit_rounded, color: isDark ? Colors.white : const Color(0xFF2D3748), size: 22),
+            onPressed: () async {
+              await widget.onEdit(context, widget.target);
+              setState(() {});
+              widget.onUpdate();
+            },
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 22),
+            onPressed: () => _showHapusDialog(context),
+          ),
+          const SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: widget.target.gambarByte != null ? Colors.transparent : Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: widget.target.gambarByte != null ? [
+                  BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))
+                ] : [],
+                image: widget.target.gambarByte != null ? DecorationImage(
+                  image: MemoryImage(widget.target.gambarByte!),
+                  fit: BoxFit.cover,
+                ) : null
+              ),
+              child: widget.target.gambarByte == null ? const Icon(Icons.image_not_supported_outlined, size: 60, color: Colors.grey) : null,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        formatRupiah.format(widget.target.nominalTarget),
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6)
+                        ),
+                        child: Text(
+                          widget.target.nominalPengisian != null 
+                            ? '${formatRupiah.format(widget.target.nominalPengisian)} / ${widget.target.tipeTarget ?? "Isi"}' 
+                            : 'Belum diatur',
+                          style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                CircularPercentIndicator(
+                  radius: 38.0,
+                  lineWidth: 6.0,
+                  percent: progress,
+                  animation: true,
+                  center: Text("${(progress * 100).toInt()}%", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+                  progressColor: isTercapai ? Colors.green : const Color(0xFF2D3748),
+                  backgroundColor: (isTercapai ? Colors.green : const Color(0xFF2D3748)).withOpacity(0.15),
+                  circularStrokeCap: CircularStrokeCap.round,
+                ),
+              ],
+            ),
+            const Divider(height: 48, thickness: 1),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Tanggal Dibuat', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(DateFormat('dd MMM yyyy').format(DateTime.now()), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), 
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text('Estimasi', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(widget.target.tanggalTarget != null ? '${daysRemaining > 0 ? daysRemaining : 0} Hari Lagi' : '-', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+            const Divider(height: 48, thickness: 1),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2D3748) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+                ]
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 24)
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          reminderTime?.format(context) ?? '12:00',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
+                        const Text(
+                          'Minggu',
+                          style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: isReminderActive,
+                    onChanged: (val) {
+                      setState(() => isReminderActive = val);
+                      _saveReminderSettings();
+                    },
+                    activeColor: const Color(0xFF2D3748),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF2D3748) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
+                ]
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      const Text('Terkumpul', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(
+                        formatRupiah.format(widget.target.saldoSekarang),
+                        style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                  Container(height: 40, width: 1, color: Colors.grey.withOpacity(0.3)),
+                  Column(
+                    children: [
+                      const Text('Kekurangan', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      Text(
+                        sisa > 0 ? formatRupiah.format(sisa) : 'Rp0',
+                        style: const TextStyle(fontSize: 16, color: Colors.redAccent, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text('Riwayat Tabungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 12),
+            widget.target.riwayat.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'Tidak Ada Riwayat Tabungan',
+                        style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: widget.target.riwayat.length,
+                    itemBuilder: (context, index) {
+                      final trx = widget.target.riwayat[index];
+                      bool isTambah = trx.jumlah > 0;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF2D3748) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: isTambah ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isTambah ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, 
+                                color: isTambah ? Colors.green : Colors.redAccent,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(trx.keterangan ?? (isTambah ? 'Menabung' : 'Penarikan'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                  const SizedBox(height: 4),
+                                  Text(DateFormat('dd MMM yyyy • HH:mm').format(trx.waktu), style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w500)),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${isTambah ? '+' : ''}${formatRupiah.format(trx.jumlah)}', 
+                              style: TextStyle(fontWeight: FontWeight.w900, color: isTambah ? Colors.green : Colors.redAccent, fontSize: 14)
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ],
+        ),
+      ),
+      floatingActionButton: !isTercapai
+          ? FloatingActionButton(
+              onPressed: () {
+                _showCatatTabunganDialog(context);
+              },
+              backgroundColor: const Color(0xFF2D3748),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: const Icon(Icons.edit_note_rounded, size: 28),
+            )
+          : null,
+    );
+  }
+
+  void _showCatatTabunganDialog(BuildContext context) {
+    TextEditingController nominalController = TextEditingController();
+    TextEditingController ketController = TextEditingController();
+    bool isTambah = true;
+    
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D3748) : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Catat Transaksi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A202C) : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isTambah = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: isTambah ? const Color(0xFF2D3748) : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(child: Text('Menabung', style: TextStyle(fontWeight: FontWeight.bold, color: isTambah ? Colors.white : Colors.grey))),
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isTambah = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: !isTambah ? Colors.redAccent : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(child: Text('Tarik Dana', style: TextStyle(fontWeight: FontWeight.bold, color: !isTambah ? Colors.white : Colors.grey))),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: nominalController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Nominal',
+                    prefixIcon: const Icon(Icons.attach_money_rounded),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: ketController,
+                  decoration: InputDecoration(
+                    labelText: 'Keterangan (Opsional)',
+                    prefixIcon: const Icon(Icons.edit_note_rounded),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context), 
+                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                        child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isTambah ? const Color(0xFF2D3748) : Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          if (nominalController.text.isNotEmpty) {
+                            double amount = double.parse(nominalController.text);
+                            if (!isTambah) amount = -amount;
+                            
+                            widget.target.saldoSekarang += amount;
+                            if (widget.target.saldoSekarang < 0) widget.target.saldoSekarang = 0;
+                            
+                            widget.target.riwayat.insert(0, Transaksi(
+                              jumlah: amount, 
+                              waktu: DateTime.now(),
+                              keterangan: ketController.text.isNotEmpty ? ketController.text : (isTambah ? 'Nabung' : 'Penarikan')
+                            ));
+                            
+                            setState(() {});
+                            widget.onUpdate();
+                            Navigator.pop(context);
+                            
+                            if (widget.target.saldoSekarang >= widget.target.nominalTarget && isTambah) {
+                              _showHoreDialog(context);
+                            }
+                          }
+                        },
+                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showHoreDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D3748) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded, size: 70, color: Colors.green),
+              ),
+              const SizedBox(height: 24),
+              const Text('Hore!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 8),
+              const Text('Target Impianmu Telah Tercapai', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.w500)),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2D3748),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 0,
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Luar Biasa!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
