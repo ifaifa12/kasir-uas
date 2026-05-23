@@ -83,104 +83,7 @@ class TabunganOnlineApp extends StatelessWidget {
         ),
       ),
       themeMode: themeProvider.themeMode,
-      home: const SplashScreen(),
-    );
-  }
-}
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500));
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
-    
-    _controller.forward();
-    
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const HomePage()));
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF2D3748), Color(0xFF4A5568)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.account_balance_wallet_rounded, size: 80, color: Color(0xFF2D3748)),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    'Tabungan Online',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Langkah Kecil, Impian Besar ✨',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.8),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      home: const HomePage(),
     );
   }
 }
@@ -759,8 +662,6 @@ class TabunganScreen extends StatelessWidget {
             onSelected: (value) {
               if (value == 'Pengaturan') {
                 onOpenSettings();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fitur $value segera hadir!'), duration: const Duration(seconds: 2)));
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -771,46 +672,6 @@ class TabunganScreen extends StatelessWidget {
                     Icon(Icons.settings_outlined, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
                     const SizedBox(width: 12),
                     const Text('Pengaturan'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Beri Nilai Aplikasi',
-                child: Row(
-                  children: [
-                    Icon(Icons.star_border_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
-                    const SizedBox(width: 12),
-                    const Text('Beri Nilai Aplikasi'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Gift Untuk Developer',
-                child: Row(
-                  children: [
-                    Icon(Icons.card_giftcard_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
-                    const SizedBox(width: 12),
-                    const Text('Gift Untuk Developer'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Backup Restore',
-                child: Row(
-                  children: [
-                    Icon(Icons.storage_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
-                    const SizedBox(width: 12),
-                    const Text('Backup Restore'),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'Open Source License',
-                child: Row(
-                  children: [
-                    Icon(Icons.code_rounded, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
-                    const SizedBox(width: 12),
-                    const Text('Open Source License'),
                   ],
                 ),
               ),
