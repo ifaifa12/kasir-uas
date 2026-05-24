@@ -1109,7 +1109,7 @@ class RiwayatScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Riwayat Transaksi'),
+        title: const Text('Semua Riwayat'),
       ),
       body: !hasAnyRiwayat
           ? Center(

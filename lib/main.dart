@@ -1040,7 +1040,7 @@ class RiwayatScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Riwayat Transaksi'),
+        title: const Text('Semua Riwayat'),
         centerTitle: false,
       ),
       body: !hasAnyRiwayat
@@ -1312,19 +1312,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       }
                     },
                   ),
-                  const Divider(height: 1, indent: 60, endIndent: 20),
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.transparent, borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.audiotrack_rounded, color: Colors.transparent) // alignment placeholder
-                    ),
-                    title: const Text('Nada Dering', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(selectedRingtone, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => _showRingtoneDialog(context),
-                  ),
+
                 ]
               ],
             ),
@@ -1428,65 +1416,6 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     );
   }
 
-  void _showRingtoneDialog(BuildContext context) {
-    final List<String> ringtones = ['Default', 'Ding', 'Chime', 'Morning', 'Berdering'];
-    String tempSelected = selectedRingtone;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Pilih Nada Dering', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                ...ringtones.map((r) => RadioListTile<String>(
-                  title: Text(r, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  value: r,
-                  groupValue: tempSelected,
-                  activeColor: const Color(0xFF2D3748),
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: (val) => setDialogState(() => tempSelected = val!),
-                )),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2D3748),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () {
-                          setState(() => selectedRingtone = tempSelected);
-                          _saveReminderSettings();
-                          Navigator.pop(ctx);
-                        },
-                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showTemaDialog(BuildContext context, ThemeProvider provider) {
     ThemeMode selectedMode = provider.themeMode;
