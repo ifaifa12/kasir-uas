@@ -12,6 +12,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'providers/theme_provider.dart';
 import 'services/notification_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 String tr(BuildContext context, String key) {
   return key;
@@ -91,6 +92,10 @@ class TabunganOnlineApp extends StatelessWidget {
   }
 }
 
+// ─── Currency formatter ──────────────────────────────────────────────────────
+final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+String symbolMataUang(String kode) => 'Rp';
+
 class TargetTabungan {
   String id;
   String nama;
@@ -101,6 +106,13 @@ class TargetTabungan {
   DateTime? tanggalTarget;
   double? nominalPengisian;
   List<Transaksi> riwayat;
+  String mataUang;
+
+  // Per-target reminder fields
+  bool isReminderActive;
+  int? reminderHour;
+  int? reminderMinute;
+  List<int> reminderDays;
 
   TargetTabungan({
     required this.id,
@@ -112,7 +124,12 @@ class TargetTabungan {
     this.tanggalTarget,
     this.nominalPengisian,
     required this.riwayat,
-  });
+    this.mataUang = 'IDR',
+    this.isReminderActive = false,
+    this.reminderHour,
+    this.reminderMinute,
+    List<int>? reminderDays,
+  }) : this.reminderDays = reminderDays ?? [1, 2, 3, 4, 5, 6, 7];
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -124,6 +141,11 @@ class TargetTabungan {
     'tanggalTarget': tanggalTarget?.toIso8601String(),
     'nominalPengisian': nominalPengisian,
     'riwayat': riwayat.map((e) => e.toJson()).toList(),
+    'mataUang': mataUang,
+    'isReminderActive': isReminderActive,
+    'reminderHour': reminderHour,
+    'reminderMinute': reminderMinute,
+    'reminderDays': reminderDays,
   };
 
   factory TargetTabungan.fromJson(Map<String, dynamic> json) => TargetTabungan(
@@ -136,6 +158,13 @@ class TargetTabungan {
     tanggalTarget: json['tanggalTarget'] != null ? DateTime.parse(json['tanggalTarget']) : null,
     nominalPengisian: json['nominalPengisian'] != null ? (json['nominalPengisian'] as num).toDouble() : null,
     riwayat: (json['riwayat'] as List).map((e) => Transaksi.fromJson(e)).toList(),
+    mataUang: json['mataUang'] ?? 'IDR',
+    isReminderActive: json['isReminderActive'] ?? false,
+    reminderHour: json['reminderHour'],
+    reminderMinute: json['reminderMinute'],
+    reminderDays: json['reminderDays'] != null 
+        ? List<int>.from(json['reminderDays']) 
+        : [1, 2, 3, 4, 5, 6, 7],
   );
 }
 
@@ -172,10 +201,56 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
   String userName = 'Sobat';
 
+  // Reminder/Notif state
+  TimeOfDay? reminderTime;
+  bool isReminderActive = false;
+  List<int> reminderDays = [1, 2, 3, 4, 5, 6, 7]; // Default to all days
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _loadReminderSettings();
+  }
+
+  Future<void> _loadReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final int? hour = prefs.getInt('reminderHour');
+    final int? minute = prefs.getInt('reminderMinute');
+    final bool active = prefs.getBool('isReminderActive') ?? false;
+    final List<String>? savedDays = prefs.getStringList('reminderDays');
+    
+    if (mounted) {
+      setState(() {
+        if (hour != null && minute != null) {
+          reminderTime = TimeOfDay(hour: hour, minute: minute);
+        }
+        isReminderActive = active;
+        if (savedDays != null) {
+          reminderDays = savedDays.map((e) => int.parse(e)).toList();
+        }
+      });
+    }
+  }
+
+  Future<void> _saveReminderSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (reminderTime != null) {
+      await prefs.setInt('reminderHour', reminderTime!.hour);
+      await prefs.setInt('reminderMinute', reminderTime!.minute);
+    }
+    await prefs.setBool('isReminderActive', isReminderActive);
+    await prefs.setStringList('reminderDays', reminderDays.map((e) => e.toString()).toList());
+    
+    if (isReminderActive) {
+      await NotificationService().requestPermission();
+      if (reminderTime != null && reminderDays.isNotEmpty) {
+        await NotificationService().scheduleWeeklyReminders(reminderTime!.hour, reminderTime!.minute, reminderDays);
+      }
+      await NotificationService().showImmediateNotification();
+    } else {
+      await NotificationService().cancelAllReminders();
+    }
   }
 
   Future<void> _loadData() async {
@@ -238,6 +313,433 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // ─── Dialog helpers for popup menu ────────────────────────────────────────
+  void _showEditNamaDialogHome(BuildContext context) {
+    final ctrl = TextEditingController(text: userName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nama Profil', style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: TextField(
+          controller: ctrl,
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama kamu',
+            prefixIcon: const Icon(Icons.person_rounded),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D3748),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              if (ctrl.text.isNotEmpty) {
+                _changeUserName(ctrl.text);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPermissionDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Akses Notifikasi Diperlukan', style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: const Text(
+          'Untuk mengaktifkan pengingat menabung, aplikasi memerlukan izin notifikasi. Silakan aktifkan izin notifikasi pada Pengaturan HP Anda.',
+          style: TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D3748),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(ctx);
+            },
+            child: const Text('Buka Pengaturan', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotifikasiDialogHome(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2D3748) : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Notifikasi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
+                          Text('Aktifkan pengingat harian', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: isReminderActive,
+                      activeColor: const Color(0xFF2D3748),
+                      onChanged: (val) async {
+                        if (val) {
+                          bool granted = await NotificationService().requestPermission();
+                          if (!granted) {
+                            if (context.mounted) {
+                              _showPermissionDeniedDialog(context);
+                            }
+                            setDlg(() => isReminderActive = false);
+                            setState(() {});
+                            _saveReminderSettings();
+                            return;
+                          }
+                        }
+                        setDlg(() => isReminderActive = val);
+                        setState(() {});
+                        _saveReminderSettings();
+                      },
+                    ),
+                  ],
+                ),
+                if (isReminderActive) ...[
+                  const Divider(height: 24),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.access_time_rounded, color: Colors.amber),
+                    ),
+                    title: const Text('Waktu Pengingat', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      reminderTime?.format(context) ?? 'Belum diatur',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: reminderTime ?? TimeOfDay.now(),
+                      );
+                      if (picked != null) {
+                        setDlg(() => reminderTime = picked);
+                        setState(() {});
+                        _saveReminderSettings();
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Hari Pengingat', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (var entry in {1: 'Sen', 2: 'Sel', 3: 'Rab', 4: 'Kam', 5: 'Jum', 6: 'Sab', 7: 'Min'}.entries)
+                        ChoiceChip(
+                          label: Text(entry.value),
+                          selected: reminderDays.contains(entry.key),
+                          onSelected: (selected) {
+                            setDlg(() {
+                              if (selected) {
+                                reminderDays.add(entry.key);
+                              } else {
+                                reminderDays.remove(entry.key);
+                              }
+                            });
+                            setState(() {});
+                            _saveReminderSettings();
+                          },
+                          selectedColor: const Color(0xFF2D3748),
+                          labelStyle: TextStyle(
+                            color: reminderDays.contains(entry.key) ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12
+                          ),
+                          backgroundColor: Colors.grey.withOpacity(0.1),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D3748),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showTemaDialogHome(BuildContext context) {
+    final provider = Provider.of<ThemeProvider>(context, listen: false);
+    ThemeMode selectedMode = provider.themeMode;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? const Color(0xFF2D3748) : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Tema Aplikasi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Sistem Default', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.system, groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDlg(() => selectedMode = val!),
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Terang', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.light, groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDlg(() => selectedMode = val!),
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Gelap', style: TextStyle(fontWeight: FontWeight.w600)),
+                  value: ThemeMode.dark, groupValue: selectedMode,
+                  activeColor: const Color(0xFF2D3748),
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: (val) => setDlg(() => selectedMode = val!),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                        child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2D3748),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                        ),
+                        onPressed: () {
+                          provider.setThemeMode(selectedMode);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEksporDialogHome(BuildContext context) {
+    if (daftarTarget.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak ada data target tabungan untuk diekspor.'), backgroundColor: Colors.redAccent),
+      );
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2D3748) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Ekspor Laporan PDF', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Pilih metode penyimpanan laporan PDF Anda:', style: TextStyle(color: Colors.grey, fontSize: 14)),
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.blue),
+                ),
+                title: const Text('Simpan sebagai File PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Cetak atau simpan ke file lokal perangkat', style: TextStyle(fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _prosesEksporHome(context, share: false);
+                },
+              ),
+              const Divider(height: 20),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.share_rounded, color: Colors.green),
+                ),
+                title: const Text('Bagikan / Simpan ke Drive', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Google Drive, WhatsApp, Email, dll.', style: TextStyle(fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _prosesEksporHome(context, share: true);
+                },
+              ),
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _prosesEksporHome(BuildContext context, {required bool share}) async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(children: [
+          SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+          SizedBox(width: 16),
+          Text('Membuat dokumen PDF...'),
+        ]),
+        duration: Duration(seconds: 10),
+      ),
+    );
+    try {
+      final pdf = pw.Document();
+      final fmt = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+      pdf.addPage(pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context ctx) => [
+          pw.Text('LAPORAN TABUNGAN ONLINE', style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 4),
+          pw.Text('Pengguna: $userName  |  Tanggal: ${DateFormat("dd MMMM yyyy").format(DateTime.now())}',
+              style: pw.TextStyle(fontSize: 12, color: PdfColors.grey600)),
+          pw.Divider(thickness: 1.5),
+          pw.SizedBox(height: 12),
+          pw.TableHelper.fromTextArray(
+            headers: ['Target', 'Nominal', 'Terkumpul', '%', 'Status'],
+            data: daftarTarget.map((t) {
+              final pct = (t.saldoSekarang / t.nominalTarget).clamp(0.0, 1.0);
+              final sym = symbolMataUang(t.mataUang);
+              return [t.nama, '$sym ${fmt.format(t.nominalTarget)}', '$sym ${fmt.format(t.saldoSekarang)}', '${(pct * 100).toInt()}%', t.saldoSekarang >= t.nominalTarget ? 'Selesai' : 'Berlangsung'];
+            }).toList(),
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+            headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF2D3748)),
+            cellHeight: 28,
+          ),
+          pw.SizedBox(height: 20),
+          ...daftarTarget.map((t) {
+            if (t.riwayat.isEmpty) return pw.SizedBox(height: 0);
+            final sym = symbolMataUang(t.mataUang);
+            return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+              pw.Text('Riwayat: ${t.nama}', style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 6),
+              pw.TableHelper.fromTextArray(
+                headers: ['Waktu', 'Jenis', 'Nominal', 'Keterangan'],
+                data: t.riwayat.map((trx) => [
+                  DateFormat('dd/MM/yy HH:mm').format(trx.waktu),
+                  trx.jumlah > 0 ? 'Nabung' : 'Tarik',
+                  '$sym ${fmt.format(trx.jumlah.abs())}',
+                  trx.keterangan ?? '-',
+                ]).toList(),
+                headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                cellHeight: 24,
+              ),
+              pw.SizedBox(height: 12),
+            ]);
+          }).toList(),
+        ],
+      ));
+      final bytes = await pdf.save();
+      if (mounted) ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (share) {
+        await Printing.sharePdf(bytes: bytes, filename: 'Laporan_$userName.pdf');
+      } else {
+        await Printing.layoutPdf(onLayout: (_) async => bytes, name: 'Laporan_$userName.pdf');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -247,17 +749,19 @@ class _HomePageState extends State<HomePage> {
     final screens = [
       TabunganScreen(
         userName: userName,
-        daftarTarget: daftarTarget, 
+        daftarTarget: daftarTarget,
         onUpdate: _updateState,
         onEdit: _showEditTargetDialog,
-        onOpenSettings: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => PengaturanScreen(
-            userName: userName,
-            onNameChanged: _changeUserName,
-          )));
-        },
+        onNamaProfil: () => _showEditNamaDialogHome(context),
+        onNotifikasi: () => _showNotifikasiDialogHome(context),
+        onTema: () => _showTemaDialogHome(context),
+        onEkspor: () => _showEksporDialogHome(context),
       ),
-      RiwayatScreen(daftarTarget: daftarTarget, onUpdate: _updateState),
+      SelesaiScreen(
+        daftarTarget: daftarTarget,
+        onUpdate: _updateState,
+        onEdit: _showEditTargetDialog,
+      ),
     ];
 
     return Scaffold(
@@ -267,8 +771,8 @@ class _HomePageState extends State<HomePage> {
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
         indicatorColor: const Color(0xFF2D3748).withOpacity(0.2),
         destinations: [
-          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home, color: Color(0xFF2D3748)), label: tr(context, 'Beranda')),
-          NavigationDestination(icon: const Icon(Icons.receipt_long_outlined), selectedIcon: const Icon(Icons.receipt_long, color: Color(0xFF2D3748)), label: tr(context, 'Riwayat')),
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home, color: Color(0xFF2D3748)), label: tr(context, 'Berlangsung')),
+          NavigationDestination(icon: const Icon(Icons.check_circle_outline_rounded), selectedIcon: const Icon(Icons.check_circle, color: Color(0xFF2D3748)), label: tr(context, 'Selesai')),
         ],
       ),
       floatingActionButton: _currentIndex == 0
@@ -351,11 +855,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
                   TextField(
                     controller: hargaController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Harga Total (Rp)',
+                      labelText: 'Harga Total',
                       prefixText: 'Rp ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -366,7 +871,7 @@ class _HomePageState extends State<HomePage> {
                     controller: nominalController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Nominal Rutin Menabung (Rp)',
+                      labelText: 'Nominal Rutin Menabung',
                       hintText: 'Cth: 10000',
                       prefixText: 'Rp ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -442,6 +947,7 @@ class _HomePageState extends State<HomePage> {
                                 tipeTarget: selectedTipe ?? "Umum",
                                 tanggalTarget: selectedDate,
                                 gambarByte: selectedImage,
+                                mataUang: 'IDR',
                                 riwayat: [],
                               ));
                               Navigator.pop(context);
@@ -527,11 +1033,12 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
                   TextField(
                     controller: hargaController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Harga Total (Rp)',
+                      labelText: 'Harga Total',
                       prefixText: 'Rp ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -542,7 +1049,7 @@ class _HomePageState extends State<HomePage> {
                     controller: nominalController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Nominal Rutin Nabung (Rp)',
+                      labelText: 'Nominal Rutin Nabung',
                       prefixText: 'Rp ',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -615,6 +1122,7 @@ class _HomePageState extends State<HomePage> {
                               target.tipeTarget = selectedTipe ?? "Umum";
                               target.tanggalTarget = selectedDate;
                               target.gambarByte = selectedImage;
+                              target.mataUang = 'IDR';
                               
                               _editTarget(target.id, target);
                               Navigator.pop(context);
@@ -640,12 +1148,25 @@ class TabunganScreen extends StatelessWidget {
   final List<TargetTabungan> daftarTarget;
   final VoidCallback onUpdate;
   final Function(BuildContext, TargetTabungan) onEdit;
-  final VoidCallback onOpenSettings;
-  const TabunganScreen({super.key, required this.userName, required this.daftarTarget, required this.onUpdate, required this.onEdit, required this.onOpenSettings});
+  final VoidCallback onNamaProfil;
+  final VoidCallback onNotifikasi;
+  final VoidCallback onTema;
+  final VoidCallback onEkspor;
+  const TabunganScreen({
+    super.key,
+    required this.userName,
+    required this.daftarTarget,
+    required this.onUpdate,
+    required this.onEdit,
+    required this.onNamaProfil,
+    required this.onNotifikasi,
+    required this.onTema,
+    required this.onEkspor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+    final ongoingTargets = daftarTarget.where((t) => t.saldoSekarang < t.nominalTarget).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -663,43 +1184,95 @@ class TabunganScreen extends StatelessWidget {
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (value) {
-              if (value == 'Pengaturan') {
-                onOpenSettings();
+            onSelected: (value) async {
+              if (value == 'nama') onNamaProfil();
+              else if (value == 'notif') onNotifikasi();
+              else if (value == 'tema') onTema();
+              else if (value == 'ekspor') onEkspor();
+              else if (value == 'izin_notif') {
+                openAppSettings();
+              } else if (value == 'izin_alarm') {
+                await Permission.scheduleExactAlarm.request();
               }
             },
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
-                value: 'Pengaturan',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings_outlined, color: Theme.of(context).textTheme.bodyLarge?.color, size: 22),
-                    const SizedBox(width: 12),
-                    const Text('Pengaturan'),
-                  ],
-                ),
+                value: 'nama',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.person_rounded, color: Colors.blue, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Nama Profil', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'notif',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'tema',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.purpleAccent]),
+                    borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.palette_rounded, color: Colors.white, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Tema', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'izin_notif',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.notifications_rounded, color: Colors.indigo, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Izin Notifikasi', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'izin_alarm',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.alarm_rounded, color: Colors.redAccent, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Izin Mengatur Alarm', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
+              ),
+              PopupMenuItem(
+                value: 'ekspor',
+                child: Row(children: [
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.download_rounded, color: Colors.green, size: 18)),
+                  const SizedBox(width: 12),
+                  const Text('Ekspor', style: TextStyle(fontWeight: FontWeight.w600)),
+                ]),
               ),
             ],
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: daftarTarget.isEmpty
+      body: ongoingTargets.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.flag_circle_rounded, size: 80, color: Colors.grey.withOpacity(0.3)),
                   const SizedBox(height: 16),
-                  Text(tr(context, 'Belum ada target impian'), style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
+                  Text(tr(context, 'Belum ada target berlangsung'), style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
                 ],
               ),
             )
           : ListView.builder(
               padding: const EdgeInsets.only(bottom: 100, top: 12, left: 16, right: 16),
-              itemCount: daftarTarget.length,
+              itemCount: ongoingTargets.length,
               itemBuilder: (context, index) {
-                final target = daftarTarget[index];
+                final target = ongoingTargets[index];
                 double sisa = target.nominalTarget - target.saldoSekarang;
                 double progress = (target.saldoSekarang / target.nominalTarget).clamp(0.0, 1.0);
                 bool isTercapai = sisa <= 0;
@@ -752,7 +1325,7 @@ class TabunganScreen extends StatelessWidget {
                                   ? DecorationImage(
                                       image: MemoryImage(target.gambarByte!),
                                       fit: BoxFit.cover,
-                                    )
+                                      )
                                   : null,
                             ),
                             child: target.gambarByte == null
@@ -1027,99 +1600,145 @@ class TabunganScreen extends StatelessWidget {
     );
   }
 }
-
-class RiwayatScreen extends StatelessWidget {
+class SelesaiScreen extends StatelessWidget {
   final List<TargetTabungan> daftarTarget;
   final VoidCallback onUpdate;
-  const RiwayatScreen({super.key, required this.daftarTarget, required this.onUpdate});
+  final Function(BuildContext, TargetTabungan) onEdit;
+  const SelesaiScreen({super.key, required this.daftarTarget, required this.onUpdate, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    bool hasAnyRiwayat = daftarTarget.any((t) => t.riwayat.isNotEmpty);
+    final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+    final completedTargets = daftarTarget.where((t) => t.saldoSekarang >= t.nominalTarget).toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Semua Riwayat'),
+        title: const Text('Target Selesai', style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: false,
       ),
-      body: !hasAnyRiwayat
+      body: completedTargets.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.receipt_long_rounded, size: 80, color: Colors.grey.withOpacity(0.3)),
+                  Icon(Icons.check_circle_outline_rounded, size: 80, color: Colors.grey.withOpacity(0.3)),
                   const SizedBox(height: 16),
-                  const Text('Belum ada transaksi', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
+                  const Text('Belum ada target yang selesai', style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 8),
+                  const Text('Terus menabung untuk mencapai impianmu! 💪', style: TextStyle(color: Colors.grey, fontSize: 13)),
                 ],
               )
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: daftarTarget.length,
+              itemCount: completedTargets.length,
               itemBuilder: (context, index) {
-                final target = daftarTarget[index];
-                if (target.riwayat.isEmpty) return const SizedBox.shrink();
-                
-                final riwayatTarget = List<Transaksi>.from(target.riwayat);
-                riwayatTarget.sort((a, b) => b.waktu.compareTo(a.waktu));
+                final target = completedTargets[index];
 
-                final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12, top: 8),
-                      child: Text(target.nama, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: isDark ? Colors.white : const Color(0xFF2D3748))),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailTargetScreen(
+                          target: target,
+                          daftarTarget: daftarTarget,
+                          onUpdate: onUpdate,
+                          onEdit: onEdit,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  target.nama,
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.stars_rounded, size: 16, color: Colors.green),
+                                    SizedBox(width: 4),
+                                    Text('Selesai', style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w800)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Container(
+                            height: 140,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF1A202C) : const Color(0xFFEDF2F7),
+                              borderRadius: BorderRadius.circular(16),
+                              image: target.gambarByte != null
+                                  ? DecorationImage(
+                                      image: MemoryImage(target.gambarByte!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: target.gambarByte == null
+                                ? const Center(
+                                    child: Icon(Icons.landscape_rounded, size: 56, color: Colors.grey),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      formatRupiah.format(target.nominalTarget),
+                                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Target Terpenuhi!',
+                                      style: TextStyle(fontSize: 13, color: Colors.green.shade600, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              CircularPercentIndicator(
+                                radius: 28.0,
+                                lineWidth: 5.0,
+                                percent: 1.0,
+                                center: const Icon(Icons.check_rounded, color: Colors.green, size: 20),
+                                progressColor: Colors.green,
+                                backgroundColor: Colors.green.withOpacity(0.15),
+                                circularStrokeCap: CircularStrokeCap.round,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    ...riwayatTarget.map((trx) {
-                      bool isTambah = trx.jumlah > 0;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF2D3748) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2))
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: isTambah ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isTambah ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, 
-                                color: isTambah ? Colors.green : Colors.redAccent,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(trx.keterangan ?? (isTambah ? 'Menabung' : 'Penarikan'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                                  const SizedBox(height: 4),
-                                  Text(DateFormat('dd MMM yyyy • HH:mm').format(trx.waktu), style: TextStyle(color: Colors.grey.shade500, fontSize: 12, fontWeight: FontWeight.w500)),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              '${isTambah ? '+' : ''}${formatRupiah.format(trx.jumlah)}', 
-                              style: TextStyle(fontWeight: FontWeight.w900, color: isTambah ? Colors.green : Colors.redAccent, fontSize: 15)
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    const Divider(height: 32, color: Colors.transparent),
-                  ],
+                  ),
                 );
               },
             ),
@@ -1130,7 +1749,13 @@ class RiwayatScreen extends StatelessWidget {
 class PengaturanScreen extends StatefulWidget {
   final String userName;
   final Function(String) onNameChanged;
-  const PengaturanScreen({super.key, required this.userName, required this.onNameChanged});
+  final List<TargetTabungan> daftarTarget;
+  const PengaturanScreen({
+    super.key,
+    required this.userName,
+    required this.onNameChanged,
+    required this.daftarTarget,
+  });
 
   @override
   State<PengaturanScreen> createState() => _PengaturanScreenState();
@@ -1180,7 +1805,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     if (isReminderActive) {
       await NotificationService().requestPermission();
       if (reminderTime != null) {
-        await NotificationService().scheduleDailyReminder(reminderTime!.hour, reminderTime!.minute);
+        await NotificationService().scheduleWeeklyReminders(reminderTime!.hour, reminderTime!.minute, [1,2,3,4,5,6,7]);
       }
       await NotificationService().showImmediateNotification();
     } else {
@@ -1339,7 +1964,7 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
               subtitle: Text('Unduh riwayat transaksi', style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
               trailing: const Icon(Icons.file_download_outlined),
               onTap: () {
-                _simulasiUnduhData(context);
+                _eksporLaporanPDF(context);
               },
             ),
           ),
@@ -1348,32 +1973,234 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
     );
   }
 
-  void _simulasiUnduhData(BuildContext context) {
+  void _eksporLaporanPDF(BuildContext context) {
+    if (widget.daftarTarget.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tidak ada data target tabungan untuk diekspor.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2D3748) : Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ekspor Laporan PDF',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Pilih metode penyimpanan laporan PDF Anda:',
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+              
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.blue),
+                ),
+                title: const Text('Simpan sebagai File PDF', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Cetak atau simpan langsung ke file lokal perangkat', style: TextStyle(fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _prosesEkspor(context, share: false);
+                },
+              ),
+              const Divider(height: 24),
+              
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.share_rounded, color: Colors.green),
+                ),
+                title: const Text('Bagikan / Simpan ke Drive', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Kirim ke Google Drive, WhatsApp, Email, dll.', style: TextStyle(fontSize: 12)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await _prosesEkspor(context, share: true);
+                },
+              ),
+              const SizedBox(height: 24),
+              
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _prosesEkspor(BuildContext context, {required bool share}) async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
           children: [
             SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
             SizedBox(width: 16),
-            Text('Menyiapkan file laporan...'),
+            Text('Membuat dokumen PDF...'),
           ],
         ),
         duration: Duration(seconds: 2),
       )
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      final pdfBytes = await _generatePdfBytes();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      if (share) {
+        await Printing.sharePdf(
+          bytes: pdfBytes, 
+          filename: 'Laporan_Tabungan_${widget.userName}.pdf',
+        );
+      } else {
+        await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => pdfBytes,
+          name: 'Laporan_Tabungan_${widget.userName}.pdf',
+        );
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Laporan berhasil diunduh ke folder Download!'),
-            backgroundColor: Colors.green.shade600,
-            behavior: SnackBarBehavior.floating,
-          )
+            content: Text('Gagal mengekspor PDF: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
-    });
+    }
+  }
+
+  Future<Uint8List> _generatePdfBytes() async {
+    final pdf = pw.Document();
+    final formatRupiah = NumberFormat.currency(locale: 'id', symbol: 'Rp', decimalDigits: 0);
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context context) {
+          return [
+            pw.Header(
+              level: 0,
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('LAPORAN TABUNGAN ONLINE', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 4),
+                  pw.Text('Nama Pengguna: ${widget.userName}', style: pw.TextStyle(fontSize: 14)),
+                  pw.Text('Tanggal Ekspor: ${DateFormat("dd MMMM yyyy HH:mm").format(DateTime.now())}', style: pw.TextStyle(fontSize: 12, color: PdfColors.grey)),
+                  pw.Divider(thickness: 2),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            
+            pw.Text('1. Ringkasan Target Tabungan', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            pw.TableHelper.fromTextArray(
+              headers: ['Nama Target', 'Target Nominal', 'Saldo Sekarang', 'Progress', 'Status'],
+              data: widget.daftarTarget.map((t) {
+                double progress = (t.saldoSekarang / t.nominalTarget).clamp(0.0, 1.0);
+                bool isTercapai = t.saldoSekarang >= t.nominalTarget;
+                return [
+                  t.nama,
+                  formatRupiah.format(t.nominalTarget),
+                  formatRupiah.format(t.saldoSekarang),
+                  '${(progress * 100).toInt()}%',
+                  isTercapai ? 'Selesai' : 'Berlangsung',
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+              headerDecoration: const pw.BoxDecoration(color: PdfColor.fromInt(0xFF2D3748)),
+              cellHeight: 30,
+              cellAlignment: pw.Alignment.centerLeft,
+              cellAlignments: {
+                1: pw.Alignment.centerRight,
+                2: pw.Alignment.centerRight,
+                3: pw.Alignment.center,
+                4: pw.Alignment.center,
+              },
+            ),
+            pw.SizedBox(height: 24),
+
+            pw.Text('2. Detail Riwayat Transaksi', style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+            pw.SizedBox(height: 8),
+            ...widget.daftarTarget.map((t) {
+              if (t.riwayat.isEmpty) {
+                return pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('Target: ${t.nama}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                    pw.SizedBox(height: 4),
+                    pw.Text('Belum ada transaksi.', style: pw.TextStyle(fontStyle: pw.FontStyle.italic, fontSize: 12, color: PdfColors.grey)),
+                    pw.SizedBox(height: 16),
+                  ],
+                );
+              }
+              
+              final trxRows = t.riwayat.map((trx) {
+                return [
+                  DateFormat('dd MMM yyyy HH:mm').format(trx.waktu),
+                  trx.jumlah > 0 ? 'Menabung (+)' : 'Penarikan (-)',
+                  formatRupiah.format(trx.jumlah.abs()),
+                  trx.keterangan ?? '-',
+                ];
+              }).toList();
+
+              return pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text('Target: ${t.nama}', style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                  pw.SizedBox(height: 6),
+                  pw.TableHelper.fromTextArray(
+                    headers: ['Waktu', 'Jenis', 'Nominal', 'Keterangan'],
+                    data: trxRows,
+                    headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                    headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
+                    cellHeight: 25,
+                    cellAlignment: pw.Alignment.centerLeft,
+                    cellAlignments: {
+                      2: pw.Alignment.centerRight,
+                    },
+                  ),
+                  pw.SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
   }
 
   void _showEditNamaDialog(BuildContext context) {
@@ -1516,9 +2343,9 @@ class DetailTargetScreen extends StatefulWidget {
 }
 
 class _DetailTargetScreenState extends State<DetailTargetScreen> {
-  TimeOfDay? reminderTime;
   bool isReminderActive = false;
-  String selectedRingtone = 'Default';
+  int globalHour = 12;
+  int globalMinute = 0;
 
   @override
   void initState() {
@@ -1526,43 +2353,79 @@ class _DetailTargetScreenState extends State<DetailTargetScreen> {
     _loadReminderSettings();
   }
 
+  void _showPermissionDeniedDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Akses Notifikasi Diperlukan', style: TextStyle(fontWeight: FontWeight.bold)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: const Text(
+          'Untuk mengaktifkan pengingat menabung, aplikasi memerlukan izin notifikasi. Silakan aktifkan izin notifikasi pada Pengaturan HP Anda.',
+          style: TextStyle(height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2D3748),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              openAppSettings();
+              Navigator.pop(ctx);
+            },
+            child: const Text('Buka Pengaturan', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _loadReminderSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final int? hour = prefs.getInt('reminderHour');
-    final int? minute = prefs.getInt('reminderMinute');
-    final bool active = prefs.getBool('isReminderActive') ?? false;
-    final String ringtone = prefs.getString('reminderRingtone') ?? 'Default';
-
-    if (hour != null && minute != null) {
+    if (mounted) {
       setState(() {
-        reminderTime = TimeOfDay(hour: hour, minute: minute);
-        isReminderActive = active;
-        selectedRingtone = ringtone;
-      });
-    } else {
-      setState(() {
-        isReminderActive = active;
-        selectedRingtone = ringtone;
+        isReminderActive = widget.target.isReminderActive;
+        globalHour = prefs.getInt('reminderHour') ?? 12;
+        globalMinute = prefs.getInt('reminderMinute') ?? 0;
       });
     }
   }
 
   Future<void> _saveReminderSettings() async {
+    widget.target.isReminderActive = isReminderActive;
+    
     final prefs = await SharedPreferences.getInstance();
-    if (reminderTime != null) {
-      await prefs.setInt('reminderHour', reminderTime!.hour);
-      await prefs.setInt('reminderMinute', reminderTime!.minute);
-    }
-    await prefs.setBool('isReminderActive', isReminderActive);
-    await prefs.setString('reminderRingtone', selectedRingtone);
+    final int h = prefs.getInt('reminderHour') ?? 12;
+    final int m = prefs.getInt('reminderMinute') ?? 0;
+    final List<String>? daysStr = prefs.getStringList('reminderDays');
+    final List<int> days = daysStr != null
+        ? daysStr.map((e) => int.parse(e)).toList()
+        : [1, 2, 3, 4, 5, 6, 7];
+
+    widget.target.reminderHour = h;
+    widget.target.reminderMinute = m;
+    widget.target.reminderDays = days;
+
+    widget.onUpdate();
 
     if (isReminderActive) {
       await NotificationService().requestPermission();
-      if (reminderTime != null) {
-        await NotificationService().scheduleDailyReminder(reminderTime!.hour, reminderTime!.minute);
+      if (days.isNotEmpty) {
+        await NotificationService().scheduleWeeklyRemindersForTarget(
+          widget.target.id,
+          widget.target.nama,
+          h,
+          m,
+          days,
+        );
       }
     } else {
-      await NotificationService().cancelAllReminders();
+      await NotificationService().cancelRemindersForTarget(widget.target.id);
     }
   }
 
@@ -1727,36 +2590,52 @@ class _DetailTargetScreenState extends State<DetailTargetScreen> {
                   BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
                 ]
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 24)
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          reminderTime?.format(context) ?? '12:00',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 24)
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${globalHour.toString().padLeft(2, '0')}:${globalMinute.toString().padLeft(2, '0')}",
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            const Text(
+                              'Jadwal Pengingat',
+                              style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ],
                         ),
-                        const Text(
-                          'Minggu',
-                          style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: isReminderActive,
-                    onChanged: (val) {
-                      setState(() => isReminderActive = val);
-                      _saveReminderSettings();
-                    },
-                    activeColor: const Color(0xFF2D3748),
+                      ),
+                      Switch(
+                        value: isReminderActive,
+                        onChanged: (val) async {
+                          if (val) {
+                            bool granted = await NotificationService().requestPermission();
+                            if (!granted) {
+                              if (context.mounted) {
+                                _showPermissionDeniedDialog(context);
+                              }
+                              setState(() => isReminderActive = false);
+                              _saveReminderSettings();
+                              return;
+                            }
+                          }
+                          setState(() => isReminderActive = val);
+                          _saveReminderSettings();
+                        },
+                        activeColor: const Color(0xFF2D3748),
+                      ),
+                    ],
                   ),
                 ],
               ),

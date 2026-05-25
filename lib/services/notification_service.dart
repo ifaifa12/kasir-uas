@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -24,12 +25,16 @@ class NotificationService {
     await requestPermission();
   }
 
-  Future<void> requestPermission() async {
-    if (kIsWeb) return;
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    await androidImplementation?.requestNotificationsPermission();
+  Future<bool> requestPermission() async {
+    if (kIsWeb) return true;
+    
+    var status = await Permission.notification.status;
+    if (status.isGranted) {
+      return true;
+    }
+    
+    status = await Permission.notification.request();
+    return status.isGranted;
   }
 
   Future<void> showImmediateNotification() async {
@@ -54,25 +59,66 @@ class NotificationService {
     );
   }
 
-  Future<void> scheduleDailyReminder(int hour, int minute) async {
+  Future<void> scheduleWeeklyReminders(int hour, int minute, List<int> days) async {
     if (kIsWeb) return;
     
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id: 0,
-      title: 'Waktunya Menabung!',
-      body: 'Jangan lupa sisihkan uang untuk target tabunganmu hari ini.',
-      scheduledDate: _nextInstanceOfTime(hour, minute),
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails('daily_reminder', 'Daily Reminder', channelDescription: 'Pengingat harian untuk menabung'),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+    await cancelAllReminders();
+    
+    for (int day in days) {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: day,
+        title: 'Waktunya Menabung!',
+        body: 'Jangan lupa sisihkan uang untuk target tabunganmu hari ini.',
+        scheduledDate: _nextInstanceOfDayAndTime(day, hour, minute),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails('weekly_reminder', 'Weekly Reminder', channelDescription: 'Pengingat harian untuk menabung'),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      );
+    }
+  }
+
+  Future<void> scheduleWeeklyRemindersForTarget(String targetId, String targetNama, int hour, int minute, List<int> days) async {
+    if (kIsWeb) return;
+    
+    await cancelRemindersForTarget(targetId);
+    
+    for (int day in days) {
+      int notificationId = (targetId.hashCode & 0x0FFFFFFF) + (day * 10000000);
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id: notificationId,
+        title: 'Tabungan ${targetNama} ⏰',
+        body: 'Ayo isi tabungan "${targetNama}" kamu hari ini agar target cepat tercapai!',
+        scheduledDate: _nextInstanceOfDayAndTime(day, hour, minute),
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails('target_reminder', 'Target Reminder', channelDescription: 'Pengingat untuk masing-masing target tabungan'),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+      );
+    }
+  }
+
+  Future<void> cancelRemindersForTarget(String targetId) async {
+    if (kIsWeb) return;
+    for (int day = 1; day <= 7; day++) {
+      int notificationId = (targetId.hashCode & 0x0FFFFFFF) + (day * 10000000);
+      await flutterLocalNotificationsPlugin.cancel(id: notificationId);
+    }
   }
 
   Future<void> cancelAllReminders() async {
     if (kIsWeb) return;
     await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  tz.TZDateTime _nextInstanceOfDayAndTime(int day, int hour, int minute) {
+    tz.TZDateTime scheduledDate = _nextInstanceOfTime(hour, minute);
+    while (scheduledDate.weekday != day) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
   }
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
