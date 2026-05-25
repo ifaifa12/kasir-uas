@@ -387,36 +387,46 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showNotifikasiDialogHome(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlg) => Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? const Color(0xFF2D3748) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF2D3748) : Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Notifikasi', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                Text('Notifikasi', style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : const Color(0xFF2D3748),
+                )),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
-                          Text('Aktifkan pengingat harian', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          Text('Pengingat Menabung', style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : const Color(0xFF2D3748),
+                          )),
+                          Text('Aktifkan pengingat harian', style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.grey,
+                            fontSize: 12,
+                          )),
                         ],
                       ),
                     ),
                     Switch(
                       value: isReminderActive,
-                      activeColor: const Color(0xFF2D3748),
+                      activeColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
                       onChanged: (val) async {
                         if (val) {
                           bool granted = await NotificationService().requestPermission();
@@ -438,23 +448,30 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 if (isReminderActive) ...[
-                  const Divider(height: 24),
+                  Divider(height: 24, color: isDark ? Colors.white24 : Colors.grey.shade200),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: Colors.amber.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.access_time_rounded, color: Colors.amber),
                     ),
-                    title: const Text('Waktu Pengingat', style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: Text('Waktu Pengingat', style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF2D3748),
+                    )),
                     subtitle: Text(
                       reminderTime?.format(context) ?? 'Belum diatur',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
+                      ),
                     ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                    trailing: Icon(Icons.chevron_right_rounded,
+                      color: isDark ? Colors.white54 : Colors.grey),
                     onTap: () async {
                       final picked = await showTimePicker(
                         context: context,
@@ -468,7 +485,10 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text('Hari Pengingat', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Hari Pengingat', style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF2D3748),
+                  )),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -489,13 +509,15 @@ class _HomePageState extends State<HomePage> {
                             setState(() {});
                             _saveReminderSettings();
                           },
-                          selectedColor: const Color(0xFF2D3748),
+                          selectedColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
                           labelStyle: TextStyle(
-                            color: reminderDays.contains(entry.key) ? Colors.white : Colors.black87,
+                            color: reminderDays.contains(entry.key)
+                                ? Colors.white
+                                : (isDark ? Colors.white70 : Colors.black87),
                             fontWeight: FontWeight.w600,
-                            fontSize: 12
+                            fontSize: 12,
                           ),
-                          backgroundColor: Colors.grey.withOpacity(0.1),
+                          backgroundColor: isDark ? Colors.white12 : Colors.grey.withOpacity(0.1),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                     ],
@@ -506,7 +528,7 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D3748),
+                      backgroundColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -1904,14 +1926,17 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                     decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                     child: const Icon(Icons.notifications_active_rounded, color: Colors.amber)
                   ),
-                  title: const Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
+                  title: Text('Pengingat Menabung', style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF2D3748),
+                  )),
                   trailing: Switch(
                     value: isReminderActive,
                     onChanged: (val) {
                       setState(() => isReminderActive = val);
                       _saveReminderSettings();
                     },
-                    activeColor: const Color(0xFF2D3748),
+                    activeColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
                   ),
                 ),
                 if (isReminderActive) ...[
@@ -1923,9 +1948,16 @@ class _PengaturanScreenState extends State<PengaturanScreen> {
                       decoration: BoxDecoration(color: Colors.transparent, borderRadius: BorderRadius.circular(10)),
                       child: const Icon(Icons.access_time_rounded, color: Colors.transparent) // alignment placeholder
                     ),
-                    title: const Text('Waktu Pengingat', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text(reminderTime?.format(context) ?? 'Belum diatur', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    trailing: const Icon(Icons.chevron_right_rounded),
+                    title: Text('Waktu Pengingat', style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : const Color(0xFF2D3748),
+                    )),
+                    subtitle: Text(reminderTime?.format(context) ?? 'Belum diatur', style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
+                    )),
+                    trailing: Icon(Icons.chevron_right_rounded,
+                      color: isDark ? Colors.white54 : Colors.grey),
                     onTap: () async {
                       final TimeOfDay? picked = await showTimePicker(
                         context: context,
@@ -2607,11 +2639,19 @@ class _DetailTargetScreenState extends State<DetailTargetScreen> {
                           children: [
                             Text(
                               "${globalHour.toString().padLeft(2, '0')}:${globalMinute.toString().padLeft(2, '0')}",
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: isDark ? Colors.white : const Color(0xFF2D3748),
+                              ),
                             ),
-                            const Text(
+                            Text(
                               'Jadwal Pengingat',
-                              style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                color: isDark ? Colors.white60 : Colors.grey,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -2633,7 +2673,7 @@ class _DetailTargetScreenState extends State<DetailTargetScreen> {
                           setState(() => isReminderActive = val);
                           _saveReminderSettings();
                         },
-                        activeColor: const Color(0xFF2D3748),
+                        activeColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
                       ),
                     ],
                   ),
