@@ -71,7 +71,13 @@ class NotificationService {
         body: 'Jangan lupa sisihkan uang untuk target tabunganmu hari ini.',
         scheduledDate: _nextInstanceOfDayAndTime(day, hour, minute),
         notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails('weekly_reminder', 'Weekly Reminder', channelDescription: 'Pengingat harian untuk menabung'),
+          android: AndroidNotificationDetails(
+            'weekly_reminder',
+            'Weekly Reminder',
+            channelDescription: 'Pengingat harian untuk menabung',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
@@ -92,7 +98,13 @@ class NotificationService {
         body: 'Ayo isi tabungan "${targetNama}" kamu hari ini agar target cepat tercapai!',
         scheduledDate: _nextInstanceOfDayAndTime(day, hour, minute),
         notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails('target_reminder', 'Target Reminder', channelDescription: 'Pengingat untuk masing-masing target tabungan'),
+          android: AndroidNotificationDetails(
+            'target_reminder',
+            'Target Reminder',
+            channelDescription: 'Pengingat untuk masing-masing target tabungan',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,

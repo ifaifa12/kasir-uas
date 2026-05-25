@@ -1192,14 +1192,14 @@ class TabunganScreen extends StatelessWidget {
               else if (value == 'izin_notif') {
                 openAppSettings();
               } else if (value == 'izin_alarm') {
-                await Permission.scheduleExactAlarm.request();
+                openAppSettings();
               }
             },
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
                 value: 'nama',
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.person_rounded, color: Colors.blue, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Nama Profil', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1208,7 +1208,7 @@ class TabunganScreen extends StatelessWidget {
               PopupMenuItem(
                 value: 'notif',
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1219,7 +1219,7 @@ class TabunganScreen extends StatelessWidget {
                 child: Row(children: [
                   Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(
                     gradient: const LinearGradient(colors: [Colors.orangeAccent, Colors.purpleAccent]),
-                    borderRadius: BorderRadius.circular(8)),
+                    shape: BoxShape.circle),
                     child: const Icon(Icons.palette_rounded, color: Colors.white, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Tema', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1228,7 +1228,7 @@ class TabunganScreen extends StatelessWidget {
               PopupMenuItem(
                 value: 'izin_notif',
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.notifications_rounded, color: Colors.indigo, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Izin Notifikasi', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1237,7 +1237,7 @@ class TabunganScreen extends StatelessWidget {
               PopupMenuItem(
                 value: 'izin_alarm',
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.alarm_rounded, color: Colors.redAccent, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Izin Mengatur Alarm', style: TextStyle(fontWeight: FontWeight.w600)),
@@ -1246,7 +1246,7 @@ class TabunganScreen extends StatelessWidget {
               PopupMenuItem(
                 value: 'ekspor',
                 child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
                     child: const Icon(Icons.download_rounded, color: Colors.green, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Ekspor', style: TextStyle(fontWeight: FontWeight.w600)),
