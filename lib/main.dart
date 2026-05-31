@@ -21,7 +21,6 @@ String tr(BuildContext context, String key) {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await NotificationService().init();
-  await NotificationService().rescheduleAllOnBoot();
   runApp(
     ChangeNotifierProvider(
       create: (_) => ThemeProvider(),
@@ -524,18 +523,42 @@ onSelected: (selected) {
                   ),
                 ],
                 const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () async {
+                        await NotificationService().showImmediateNotification();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Notifikasi tes dikirim!'),
+                              backgroundColor: Color(0xFF2D3748),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.notifications_active_rounded, size: 18),
+                      label: const Text('Tes Notif', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
+                      ),
                     ),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                      onPressed: () {
+                        _saveReminderSettings();
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Selesai', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1252,14 +1275,8 @@ class _TabunganScreenState extends State<TabunganScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (value) async {
               if (value == 'nama') widget.onNamaProfil();
-              else if (value == 'notif') widget.onNotifikasi();
               else if (value == 'tema') widget.onTema();
               else if (value == 'ekspor') widget.onEkspor();
-              else if (value == 'izin_notif') {
-                openAppSettings();
-              } else if (value == 'izin_alarm') {
-                openAppSettings();
-              }
             },
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
@@ -1271,15 +1288,7 @@ class _TabunganScreenState extends State<TabunganScreen> {
                   const Text('Nama Profil', style: TextStyle(fontWeight: FontWeight.w600)),
                 ]),
               ),
-              PopupMenuItem(
-                value: 'notif',
-                child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), shape: BoxShape.circle),
-                    child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 18)),
-                  const SizedBox(width: 12),
-                  const Text('Pengingat Menabung', style: TextStyle(fontWeight: FontWeight.w600)),
-                ]),
-              ),
+
               PopupMenuItem(
                 value: 'tema',
                 child: Row(children: [
@@ -1289,24 +1298,6 @@ class _TabunganScreenState extends State<TabunganScreen> {
                     child: const Icon(Icons.palette_rounded, color: Colors.white, size: 18)),
                   const SizedBox(width: 12),
                   const Text('Tema', style: TextStyle(fontWeight: FontWeight.w600)),
-                ]),
-              ),
-              PopupMenuItem(
-                value: 'izin_notif',
-                child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), shape: BoxShape.circle),
-                    child: const Icon(Icons.notifications_rounded, color: Colors.indigo, size: 18)),
-                  const SizedBox(width: 12),
-                  const Text('Izin Notifikasi', style: TextStyle(fontWeight: FontWeight.w600)),
-                ]),
-              ),
-              PopupMenuItem(
-                value: 'izin_alarm',
-                child: Row(children: [
-                  Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.1), shape: BoxShape.circle),
-                    child: const Icon(Icons.alarm_rounded, color: Colors.redAccent, size: 18)),
-                  const SizedBox(width: 12),
-                  const Text('Izin Mengatur Alarm', style: TextStyle(fontWeight: FontWeight.w600)),
                 ]),
               ),
               PopupMenuItem(
@@ -2285,76 +2276,6 @@ int daysRemaining = 0;
               ],
             ),
             const Divider(height: 48, thickness: 1),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2D3748) : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10)
-                ]
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: Colors.amber.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                        child: const Icon(Icons.notifications_active_rounded, color: Colors.amber, size: 24)
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: widget.onNotifikasi,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${globalHour.toString().padLeft(2, '0')}:${globalMinute.toString().padLeft(2, '0')}",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: isDark ? Colors.white : const Color(0xFF2D3748),
-                                ),
-                              ),
-                              Text(
-                                'Jadwal Pengingat (Klik untuk ubah)',
-                                style: TextStyle(
-                                  color: isDark ? Colors.white60 : Colors.grey,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Switch(
-                        value: isReminderActive,
-                        onChanged: (val) async {
-                          if (val) {
-                            bool granted = await NotificationService().requestPermission();
-                            if (!granted) {
-                              if (context.mounted) {
-                                _showPermissionDeniedDialog(context);
-                              }
-                              setState(() => isReminderActive = false);
-                              _saveReminderSettings();
-                              return;
-                            }
-                          }
-                          setState(() => isReminderActive = val);
-                          _saveReminderSettings();
-                        },
-                        activeColor: isDark ? const Color(0xFF7F9CF5) : const Color(0xFF2D3748),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
