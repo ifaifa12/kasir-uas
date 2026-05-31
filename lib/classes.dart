@@ -864,10 +864,8 @@ class TabunganScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ););
+                ));
               },
-            ),
-    );
   }
 
   void _showHapusDialog(BuildContext context, TargetTabungan target) {
@@ -996,7 +994,6 @@ class TabunganScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 32),
-                
                 Row(
                   children: [
                     Expanded(

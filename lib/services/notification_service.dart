@@ -3,6 +3,8 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -14,15 +16,63 @@ class NotificationService {
   Future<void> init() async {
     if (kIsWeb) return;
     
+    // Inisialisasi timezone dan set ke Asia/Jakarta secara eksplisit
     tz.initializeTimeZones();
+    final jakarta = tz.getLocation('Asia/Jakarta');
+    tz.setLocalLocation(jakarta);
+
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/launcher_icon');
     const DarwinInitializationSettings initializationSettingsIOS = DarwinInitializationSettings();
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
-    await flutterLocalNotificationsPlugin.initialize(settings: initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      settings: initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {},
+    );
     await requestPermission();
+  }
+
+  /// Dipanggil setelah HP restart untuk menjadwal ulang semua notifikasi aktif
+  Future<void> rescheduleAllOnBoot() async {
+    if (kIsWeb) return;
+    final prefs = await SharedPreferences.getInstance();
+
+    // Reschedule global reminder
+    final bool globalActive = prefs.getBool('isReminderActive') ?? false;
+    final int? globalHour = prefs.getInt('reminderHour');
+    final int? globalMinute = prefs.getInt('reminderMinute');
+    final List<String>? globalDays = prefs.getStringList('reminderDays');
+    if (globalActive && globalHour != null && globalMinute != null && globalDays != null && globalDays.isNotEmpty) {
+      final days = globalDays.map(int.parse).toList();
+      await scheduleWeeklyReminders(globalHour, globalMinute, days);
+    }
+
+    // Reschedule per-target reminders
+    final String? dataString = prefs.getString('tabungan_data');
+    if (dataString != null) {
+      try {
+        // ignore: depend_on_referenced_packages
+        final List<dynamic> jsonList = await _decodeJson(dataString);
+        for (final item in jsonList) {
+          final bool active = item['isReminderActive'] ?? false;
+          final int? hour = item['reminderHour'];
+          final int? minute = item['reminderMinute'];
+          final List<int> days = item['reminderDays'] != null
+              ? List<int>.from(item['reminderDays'])
+              : [1, 2, 3, 4, 5, 6, 7];
+          if (active && hour != null && minute != null && days.isNotEmpty) {
+            await scheduleWeeklyRemindersForTarget(
+              item['id'], item['nama'], hour, minute, days);
+          }
+        }
+      } catch (_) {}
+    }
+  }
+
+  List<dynamic> _decodeJson(String data) {
+    return jsonDecode(data);
   }
 
   Future<bool> requestPermission() async {
